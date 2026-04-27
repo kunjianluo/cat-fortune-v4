@@ -37,6 +37,63 @@ body {
   padding: 16px;
 }
 
+body.is-initial-loading .game-stage {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.initial-loader,
+.stage-preload-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #000;
+  color: #fff8d8;
+  text-align: center;
+}
+
+.initial-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  padding: 24px;
+}
+
+.initial-loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+.loader-cat {
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(241, 196, 15, 0.34));
+}
+
+.loader-text {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.loader-progress {
+  width: min(220px, 58vw);
+  height: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 248, 216, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.loader-progress-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #fff8d8, var(--shop-gold));
+  box-shadow: 0 0 14px rgba(241, 196, 15, 0.55);
+  transition: width 0.18s ease;
+}
+
 .game-stage {
   position: relative;
   flex: 0 0 auto;
@@ -54,6 +111,24 @@ body {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.05),
     0 24px 80px rgba(0, 0, 0, 0.58);
+}
+
+.stage-preload-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2200;
+  background: rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.stage-preload-overlay[hidden] {
+  display: none;
+}
+
+.stage-preload-overlay.is-visible {
+  opacity: 1;
 }
 
 @media (min-aspect-ratio: 4 / 3) {
@@ -3039,6 +3114,12 @@ body {
   }
 
   .opening-transition-layer {
+    transition: none;
+  }
+
+  .initial-loader.is-hidden,
+  .stage-preload-overlay,
+  .loader-progress-bar {
     transition: none;
   }
 

@@ -6,7 +6,15 @@
   <title>大馋猫：深夜占卜 - V3</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body>
+<body class="is-initial-loading">
+  <div id="initial-loader" class="initial-loader" role="status" aria-live="polite" aria-busy="true">
+    <div class="loader-cat" aria-hidden="true">🐱</div>
+    <div class="loader-text">猫猫加载中……</div>
+    <div class="loader-progress" aria-hidden="true">
+      <div id="initial-loader-bar" class="loader-progress-bar"></div>
+    </div>
+  </div>
+
   <main id="game-stage" class="game-stage">
     <section id="opening-screen" class="opening-screen" aria-labelledby="opening-title">
       <div class="rain-layer" aria-hidden="true"></div>
@@ -194,6 +202,14 @@
         <h3 id="penalty-title" class="penalty-title">猫咪惩罚</h3>
         <p id="penalty-instruction" class="penalty-instruction">猫大师正在判断这份失败的命数。</p>
         <div id="penalty-stage" class="penalty-stage" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div id="stage-preload-overlay" class="stage-preload-overlay" role="status" aria-live="polite" hidden>
+      <div class="loader-cat" aria-hidden="true">🐱</div>
+      <div id="stage-preload-text" class="loader-text">猫猫还在整理占卜道具……</div>
+      <div class="loader-progress" aria-hidden="true">
+        <div id="stage-preload-bar" class="loader-progress-bar"></div>
       </div>
     </div>
   </main>

@@ -14,6 +14,10 @@ const state = {
   shopEntryTimer: null,
   catHairTimer: null,
   openingTransitionTimer: null,
+  nextStageAssetsPromise: null,
+  nextStageAssetsReady: false,
+  nextStageAssetsDone: 0,
+  nextStageAssetsTotal: 0,
   assetManifest: null,
   assetMap0427: null,
   audioAssets: new Map(),
@@ -51,6 +55,28 @@ const COLLECTION_STORAGE_KEY = "cat_fortune_v3_collection";
 const collectionFlyMs = 720;
 // Fixed demo timing for transformation_1.gif; GIF ended events are not reliable for <img>.
 const OPENING_STREET_TRANSITION_MS = 5000;
+const INITIAL_OPENING_PRELOAD_TIMEOUT_MS = 8000;
+const NEXT_STAGE_PRELOAD_TIMEOUT_MS = 8000;
+const CRITICAL_OPENING_ASSET_KEYS = [
+  "opening.coverBackground",
+  "opening.pushButton",
+  "opening.streetToBarTransition",
+  "opening.barRestBackground",
+];
+const NEXT_STAGE_ASSET_KEYS = [
+  "opening.barWizardBackground",
+  "opening.catTransformationGif",
+  "catMaster.wizard",
+  "card.career",
+  "card.society",
+  "card.emotion",
+  "card.city",
+  "card.desire",
+  "ui.home",
+  "ui.logo",
+  "ui.dialogBox",
+  "ui.optionFrame",
+];
 
 const FAILURE_PENALTY_FALLBACKS = [
   { id: "nonsense-slip", weight_percent: 50 },
@@ -107,6 +133,11 @@ const SHOPKEEPER_LINES = {
 };
 
 const els = {
+  initialLoader: document.getElementById("initial-loader"),
+  initialLoaderBar: document.getElementById("initial-loader-bar"),
+  stagePreloadOverlay: document.getElementById("stage-preload-overlay"),
+  stagePreloadText: document.getElementById("stage-preload-text"),
+  stagePreloadBar: document.getElementById("stage-preload-bar"),
   openingScreen: document.getElementById("opening-screen"),
   enterDoorBtn: document.getElementById("enter-door-btn"),
   openingStatus: document.getElementById("opening-status"),
@@ -207,38 +238,161 @@ function toCssUrl(path) {
   return `url("${path.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
 }
 
-function preloadImageAsset(path, key) {
+function setProgressBar(bar, done, total) {
+  if (!bar) return;
+  const percent = total > 0 ? Math.round((done / total) * 100) : 100;
+  bar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+}
+
+function showInitialLoader() {
+  document.body.classList.add("is-initial-loading");
+  els.initialLoader.hidden = false;
+  els.initialLoader.classList.remove("is-hidden");
+  els.initialLoader.setAttribute("aria-busy", "true");
+  setProgressBar(els.initialLoaderBar, 0, 1);
+}
+
+function hideInitialLoader() {
+  document.body.classList.remove("is-initial-loading");
+  els.initialLoader.classList.add("is-hidden");
+  els.initialLoader.setAttribute("aria-busy", "false");
+  window.setTimeout(() => {
+    if (els.initialLoader.classList.contains("is-hidden")) {
+      els.initialLoader.hidden = true;
+    }
+  }, prefersReducedMotion() ? 0 : 200);
+}
+
+function updateInitialLoaderProgress(done, total) {
+  setProgressBar(els.initialLoaderBar, done, total);
+}
+
+function showStagePreloadOverlay(message) {
+  els.stagePreloadText.textContent = message;
+  updateStagePreloadProgress();
+  els.stagePreloadOverlay.hidden = false;
+  window.requestAnimationFrame(() => {
+    els.stagePreloadOverlay.classList.add("is-visible");
+  });
+}
+
+function hideStagePreloadOverlay() {
+  els.stagePreloadOverlay.classList.remove("is-visible");
+  window.setTimeout(() => {
+    if (!els.stagePreloadOverlay.classList.contains("is-visible")) {
+      els.stagePreloadOverlay.hidden = true;
+    }
+  }, prefersReducedMotion() ? 0 : 180);
+}
+
+function updateStagePreloadProgress() {
+  setProgressBar(els.stagePreloadBar, state.nextStageAssetsDone, state.nextStageAssetsTotal);
+}
+
+function applyOpeningAsset(key, path) {
+  if (!path) return;
+
+  const root = document.documentElement;
+  if (key === "opening.coverBackground") {
+    root.style.setProperty("--opening-cover-bg", toCssUrl(path));
+    root.classList.add("has-opening-cover-asset");
+  }
+
+  if (key === "opening.pushButton") {
+    root.style.setProperty("--opening-push-img", toCssUrl(path));
+    root.classList.add("has-opening-push-asset");
+  }
+}
+
+function preloadImageAsset(path, key, timeoutMs = 0) {
   if (!path) return Promise.resolve("");
 
   return new Promise((resolve) => {
     const image = new Image();
-    image.onload = () => resolve(path);
+    let settled = false;
+    let timeoutId = null;
+    const finish = (loadedPath) => {
+      if (settled) return;
+      settled = true;
+      if (timeoutId) window.clearTimeout(timeoutId);
+      image.onload = null;
+      image.onerror = null;
+      resolve(loadedPath);
+    };
+
+    image.onload = () => finish(path);
     image.onerror = () => {
       debugSfxWarning(`asset-map-0427 ${key}`, new Error(`image failed: ${path}`));
-      resolve("");
+      finish("");
     };
+
+    if (timeoutMs > 0) {
+      timeoutId = window.setTimeout(() => {
+        debugSfxWarning(`asset-map-0427 ${key}`, new Error(`image timed out: ${path}`));
+        finish("");
+      }, timeoutMs);
+    }
+
     image.src = path;
   });
 }
 
-async function applyOpeningAssets() {
-  const coverPath = getAssetPath0427("opening.coverBackground");
-  const pushPath = getAssetPath0427("opening.pushButton");
-  const [loadedCoverPath, loadedPushPath] = await Promise.all([
-    preloadImageAsset(coverPath, "opening.coverBackground"),
-    preloadImageAsset(pushPath, "opening.pushButton"),
-  ]);
-  const root = document.documentElement;
+async function preloadAssetKeys(keys, options = {}) {
+  const { timeoutMs = 0, onProgress = null, onLoaded = null } = options;
+  let done = 0;
+  const total = keys.length;
 
-  if (loadedCoverPath) {
-    root.style.setProperty("--opening-cover-bg", toCssUrl(loadedCoverPath));
-    root.classList.add("has-opening-cover-asset");
-  }
+  const results = await Promise.all(keys.map(async (key) => {
+    const path = getAssetPath0427(key);
+    const loadedPath = await preloadImageAsset(path, key, timeoutMs);
+    done += 1;
+    if (loadedPath && onLoaded) onLoaded(key, loadedPath);
+    if (onProgress) onProgress(done, total, key, loadedPath);
+    return { key, path, loadedPath };
+  }));
 
-  if (loadedPushPath) {
-    root.style.setProperty("--opening-push-img", toCssUrl(loadedPushPath));
-    root.classList.add("has-opening-push-asset");
-  }
+  return results;
+}
+
+function preloadCriticalOpeningAssets(onProgress) {
+  return preloadAssetKeys(CRITICAL_OPENING_ASSET_KEYS, {
+    timeoutMs: INITIAL_OPENING_PRELOAD_TIMEOUT_MS,
+    onProgress,
+    onLoaded: applyOpeningAsset,
+  });
+}
+
+function startNextStageAssetPreload() {
+  if (state.nextStageAssetsPromise) return state.nextStageAssetsPromise;
+
+  state.nextStageAssetsReady = false;
+  state.nextStageAssetsDone = 0;
+  state.nextStageAssetsTotal = NEXT_STAGE_ASSET_KEYS.length;
+  updateStagePreloadProgress();
+
+  state.nextStageAssetsPromise = preloadAssetKeys(NEXT_STAGE_ASSET_KEYS, {
+    timeoutMs: NEXT_STAGE_PRELOAD_TIMEOUT_MS,
+    onProgress: (done) => {
+      state.nextStageAssetsDone = done;
+      updateStagePreloadProgress();
+    },
+  }).catch((error) => {
+    debugSfxWarning("next-stage-assets", error);
+  }).finally(() => {
+    state.nextStageAssetsDone = state.nextStageAssetsTotal;
+    state.nextStageAssetsReady = true;
+    updateStagePreloadProgress();
+  });
+
+  return state.nextStageAssetsPromise;
+}
+
+async function ensureNextStageAssetsReadyBeforeIntro() {
+  if (state.nextStageAssetsReady) return;
+  const preloadPromise = startNextStageAssetPreload();
+  showStagePreloadOverlay("猫猫还在整理占卜道具……");
+  await preloadPromise;
+  hideStagePreloadOverlay();
 }
 
 function isLocalDebugHost() {
@@ -1185,10 +1339,11 @@ function hideOpeningTransitionGif() {
   els.openingTransitionGif.removeAttribute("src");
 }
 
-function finishOpeningStreetTransition() {
+async function finishOpeningStreetTransition() {
   if (!state.isOpeningTransitioning) return;
   state.isOpeningTransitioning = false;
   hideOpeningTransitionGif();
+  await ensureNextStageAssetsReadyBeforeIntro();
   startIntro();
 }
 
@@ -1781,18 +1936,48 @@ function handleResultAction() {
 }
 
 async function init() {
+  const initialLoaderTotal = CRITICAL_OPENING_ASSET_KEYS.length + 2;
+  let initialLoaderDone = 0;
+  const markInitialLoaderStep = () => {
+    initialLoaderDone += 1;
+    updateInitialLoaderProgress(initialLoaderDone, initialLoaderTotal);
+  };
+
+  showInitialLoader();
   try {
     setScreen("opening");
-    loadAssetMap0427()
+    const assetManifestPromise = loadAssetManifest();
+    const runtimeDataPromise = loadGameData().then((data) => {
+      state.data = data;
+      markInitialLoaderStep();
+    });
+    const assetMapPromise = loadAssetMap0427()
       .then((assetMap) => {
         state.assetMap0427 = assetMap;
-        return applyOpeningAssets();
+        markInitialLoaderStep();
+        return assetMap;
       })
-      .catch((error) => debugSfxWarning("asset-map-0427", error));
-    state.data = await loadGameData();
-    state.assetManifest = await loadAssetManifest();
+      .catch((error) => {
+        debugSfxWarning("asset-map-0427", error);
+        state.assetMap0427 = null;
+        markInitialLoaderStep();
+        return null;
+      });
+    const criticalOpeningAssetsPromise = assetMapPromise.then(() => (
+      preloadCriticalOpeningAssets(markInitialLoaderStep)
+    ));
+
+    await Promise.all([
+      runtimeDataPromise,
+      assetMapPromise,
+      criticalOpeningAssetsPromise,
+    ]);
+
+    assetManifestPromise.then((assetManifest) => {
+      state.assetManifest = assetManifest;
+      preloadAudioAssets();
+    });
     state.collection = loadCollection();
-    preloadAudioAssets();
     renderIssueButtons();
     updateCollectionButton();
     updateSacrificeSlots();
@@ -1817,11 +2002,14 @@ async function init() {
     });
     els.submitBtn.addEventListener("click", submitSelection);
     els.resultActionBtn.addEventListener("click", handleResultAction);
+    hideInitialLoader();
+    startNextStageAssetPreload();
   } catch (error) {
     console.error(error);
     els.enterDoorBtn.disabled = true;
     els.openingStatus.textContent = "猫大师今天打烊了，CSV 编译数据没加载出来。";
     els.riddleBox.textContent = "猫大师今天打烊了，CSV 编译数据没加载出来。请先运行 node scripts/compile-csv-to-runtime.js。";
+    hideInitialLoader();
   }
 }
 
