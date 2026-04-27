@@ -1,0 +1,312 @@
+{
+  "schema_version": "asset-map-0427-v1",
+  "project": "cat-fortune-v3",
+  "source_prd": "_source_docs/《猫猫占卜》PRD_0427.md",
+  "source_audit": "cat-fortune-v3/docs/asset-audit-0427.md",
+  "asset_root": "../cat_fortune_asset_submission_pack_minimal/images",
+  "notes": [
+    "PRD sizes are visual references, not strict CSS constraints.",
+    "Use this map to avoid fragile direct references to filenames with spaces, typo variants, or l/I ambiguity.",
+    "Do not rename original teammate-provided assets unless explicitly requested.",
+    "The audit report recorded unit/reture.png, but the current filesystem contains unit/return.png."
+  ],
+  "assets": {
+    "opening.coverBackground": {
+      "prd_name": "street_MeowracleHat.jpg",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/background/street_MeowracleHat.jpg",
+      "type": "image",
+      "group": "opening",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "opening.pushButton": {
+      "prd_name": "PUSH button.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/PUSH button.png",
+      "type": "image",
+      "group": "opening",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "opening.streetToBarTransition": {
+      "prd_name": "transformation_1.gif",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/transformation_1.gif",
+      "type": "gif",
+      "group": "opening",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "opening.barRestBackground": {
+      "prd_name": "bar-rest cat.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/background/bar-rest cat.png",
+      "type": "image",
+      "group": "opening",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "opening.barWizardBackground": {
+      "prd_name": "bar-wizard cat.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/background/bar-wizard cat.png",
+      "type": "image",
+      "group": "opening",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "opening.catTransformationGif": {
+      "prd_name": "image transformation.gif",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/image transformation.gif",
+      "type": "gif",
+      "group": "opening",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "ui.home": {
+      "prd_name": "home.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/unit/home.png",
+      "type": "image",
+      "group": "ui",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "ui.return": {
+      "prd_name": "return.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/unit/return.png",
+      "type": "image",
+      "group": "ui",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Audit report recorded actual file as reture.png; current filesystem contains return.png."
+    },
+    "ui.logo": {
+      "prd_name": "logo.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/unit/logo.png",
+      "type": "image",
+      "group": "ui",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "ui.dialogBox": {
+      "prd_name": "dialog box.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/dialog box.png",
+      "type": "image",
+      "group": "ui",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "ui.optionFrame": {
+      "prd_name": "option frame.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/card/option frame.png",
+      "type": "image",
+      "group": "ui",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "PRD places this asset under card; map exposes it as a UI frame."
+    },
+    "ui.ring": {
+      "prd_name": "ring.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/ring.png",
+      "type": "image",
+      "group": "ui",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "card.career": {
+      "prd_name": "l.career.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/card/I.career.png",
+      "type": "image",
+      "group": "card",
+      "status": "ready",
+      "match_type": "fuzzy",
+      "notes": "PRD says l.career.png; actual file is I.career.png."
+    },
+    "card.society": {
+      "prd_name": "l.society.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/card/I.society.png",
+      "type": "image",
+      "group": "card",
+      "status": "ready",
+      "match_type": "fuzzy",
+      "notes": "PRD says l.society.png; actual file is I.society.png."
+    },
+    "card.emotion": {
+      "prd_name": "l.emotion.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/card/I.emotion.png",
+      "type": "image",
+      "group": "card",
+      "status": "ready",
+      "match_type": "fuzzy",
+      "notes": "PRD says l.emotion.png; actual file is I.emotion.png."
+    },
+    "card.city": {
+      "prd_name": "l.city.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/card/I.city.png",
+      "type": "image",
+      "group": "card",
+      "status": "ready",
+      "match_type": "fuzzy",
+      "notes": "PRD says l.city.png; actual file is I.city.png."
+    },
+    "card.desire": {
+      "prd_name": "l.desire.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/card/I.desire.png",
+      "type": "image",
+      "group": "card",
+      "status": "ready",
+      "match_type": "fuzzy",
+      "notes": "PRD says l.desire.png; actual file is I.desire.png."
+    },
+    "shopStreet.background": {
+      "prd_name": "street_3shop back.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/background/street_3shop back.png",
+      "type": "image",
+      "group": "shopStreet",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "shopBuilding.dessertStation": {
+      "prd_name": "dessert_building.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/dessert_building.png",
+      "type": "image",
+      "group": "shopBuilding",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "shopBuilding.iceRoom": {
+      "prd_name": "ice cafe_building.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/ice cafe_building.png",
+      "type": "image",
+      "group": "shopBuilding",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "shopBuilding.streetStall": {
+      "prd_name": "food stall_building.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/others/food stall_building.png",
+      "type": "image",
+      "group": "shopBuilding",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "shopInterior.dessertStation": {
+      "prd_name": "dessert_inside.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/background/dessert_inside.png",
+      "type": "image",
+      "group": "shopInterior",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "shopInterior.iceRoom": {
+      "prd_name": "ice cafe_inside.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/background/ice cafe_inside.png",
+      "type": "image",
+      "group": "shopInterior",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "shopInterior.streetStall": {
+      "prd_name": "food stall_inside.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/background/food stall_inside.png",
+      "type": "image",
+      "group": "shopInterior",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "shopkeeper.dessertStation": {
+      "prd_name": "dessert_cat.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/cat images/dessert_cat.png",
+      "type": "image",
+      "group": "shopkeeper",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Actual folder name contains a space: cat images."
+    },
+    "shopkeeper.iceRoom": {
+      "prd_name": "ice cafe_cat.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/cat images/ice cafe_cat.png",
+      "type": "image",
+      "group": "shopkeeper",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Actual folder name contains a space: cat images."
+    },
+    "shopkeeper.streetStall": {
+      "prd_name": "food stall_cat.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/cat images/food stall_cat.png",
+      "type": "image",
+      "group": "shopkeeper",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Actual folder name contains a space: cat images."
+    },
+    "catMaster.wizard": {
+      "prd_name": "wizard cat.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/cat images/wizard cat.png",
+      "type": "image",
+      "group": "catMaster",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Actual folder name contains a space: cat images."
+    },
+    "catMaster.halfSuccess": {
+      "prd_name": "half-successful.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/cat images/half-successful.png",
+      "type": "image",
+      "group": "catMaster",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Actual folder name contains a space: cat images."
+    },
+    "catMaster.fail": {
+      "prd_name": "fail.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/cat images/fail.png",
+      "type": "image",
+      "group": "catMaster",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Actual folder name contains a space: cat images."
+    },
+    "catMaster.success": {
+      "prd_name": "successful.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/cat images/successful.png",
+      "type": "image",
+      "group": "catMaster",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "Actual folder name contains a space: cat images."
+    },
+    "punishment.claw": {
+      "prd_name": "claw.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/unit/claw.png",
+      "type": "image",
+      "group": "punishment",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "PRD mentions unt; current actual folder is unit."
+    },
+    "punishment.feather": {
+      "prd_name": "feather.png",
+      "path": "../cat_fortune_asset_submission_pack_minimal/images/unit/feather.png",
+      "type": "image",
+      "group": "punishment",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": "PRD mentions unt; current actual folder is unit."
+    }
+  }
+}
