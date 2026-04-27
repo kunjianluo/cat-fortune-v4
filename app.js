@@ -10,9 +10,12 @@ const state = {
   isJudging: false,
   isShopEntering: false,
   isPenaltyFinishing: false,
+  isOpeningTransitioning: false,
   shopEntryTimer: null,
   catHairTimer: null,
+  openingTransitionTimer: null,
   assetManifest: null,
+  assetMap0427: null,
   audioAssets: new Map(),
   audioCache: new Map(),
   cardFlow: {
@@ -46,6 +49,8 @@ const cardFlowTiming = {
 
 const COLLECTION_STORAGE_KEY = "cat_fortune_v3_collection";
 const collectionFlyMs = 720;
+// Fixed demo timing for transformation_1.gif; GIF ended events are not reliable for <img>.
+const OPENING_STREET_TRANSITION_MS = 5000;
 
 const FAILURE_PENALTY_FALLBACKS = [
   { id: "nonsense-slip", weight_percent: 50 },
@@ -105,6 +110,8 @@ const els = {
   openingScreen: document.getElementById("opening-screen"),
   enterDoorBtn: document.getElementById("enter-door-btn"),
   openingStatus: document.getElementById("opening-status"),
+  openingTransitionLayer: document.getElementById("opening-transition-layer"),
+  openingTransitionGif: document.getElementById("opening-transition-gif"),
   catIntroScreen: document.getElementById("cat-intro-screen"),
   introDialogue: document.getElementById("intro-dialogue"),
   introContinueBtn: document.getElementById("intro-continue-btn"),
@@ -176,6 +183,61 @@ async function loadAssetManifest() {
   } catch (error) {
     debugSfxWarning("asset-manifest", error);
     return null;
+  }
+}
+
+async function loadAssetMap0427() {
+  try {
+    const response = await fetch("./content/asset-map-0427.json", { cache: "no-store" });
+    if (!response.ok) return null;
+    return response.json();
+  } catch (error) {
+    debugSfxWarning("asset-map-0427", error);
+    return null;
+  }
+}
+
+function getAssetPath0427(key) {
+  const asset = state.assetMap0427?.assets?.[key];
+  if (!asset || asset.status !== "ready" || !["image", "gif"].includes(asset.type)) return "";
+  return asset.path || "";
+}
+
+function toCssUrl(path) {
+  return `url("${path.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
+}
+
+function preloadImageAsset(path, key) {
+  if (!path) return Promise.resolve("");
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(path);
+    image.onerror = () => {
+      debugSfxWarning(`asset-map-0427 ${key}`, new Error(`image failed: ${path}`));
+      resolve("");
+    };
+    image.src = path;
+  });
+}
+
+async function applyOpeningAssets() {
+  const coverPath = getAssetPath0427("opening.coverBackground");
+  const pushPath = getAssetPath0427("opening.pushButton");
+  const [loadedCoverPath, loadedPushPath] = await Promise.all([
+    preloadImageAsset(coverPath, "opening.coverBackground"),
+    preloadImageAsset(pushPath, "opening.pushButton"),
+  ]);
+  const root = document.documentElement;
+
+  if (loadedCoverPath) {
+    root.style.setProperty("--opening-cover-bg", toCssUrl(loadedCoverPath));
+    root.classList.add("has-opening-cover-asset");
+  }
+
+  if (loadedPushPath) {
+    root.style.setProperty("--opening-push-img", toCssUrl(loadedPushPath));
+    root.classList.add("has-opening-push-asset");
   }
 }
 
@@ -1111,6 +1173,72 @@ function handleCardFlowBack() {
   showSeedSelection();
 }
 
+function hideOpeningTransitionGif() {
+  if (state.openingTransitionTimer) {
+    window.clearTimeout(state.openingTransitionTimer);
+    state.openingTransitionTimer = null;
+  }
+  els.openingTransitionLayer.classList.remove("is-visible");
+  els.openingTransitionLayer.hidden = true;
+  els.openingTransitionGif.onload = null;
+  els.openingTransitionGif.onerror = null;
+  els.openingTransitionGif.removeAttribute("src");
+}
+
+function finishOpeningStreetTransition() {
+  if (!state.isOpeningTransitioning) return;
+  state.isOpeningTransitioning = false;
+  hideOpeningTransitionGif();
+  startIntro();
+}
+
+function showOpeningTransitionGif(path) {
+  return new Promise((resolve, reject) => {
+    if (!path) {
+      reject(new Error("missing street transition gif"));
+      return;
+    }
+
+    els.openingTransitionGif.onload = () => resolve();
+    els.openingTransitionGif.onerror = () => reject(new Error(`image failed: ${path}`));
+    els.openingTransitionGif.src = "";
+    els.openingTransitionGif.src = path;
+  });
+}
+
+function startOpeningStreetTransition() {
+  if (state.isOpeningTransitioning || state.screen !== "opening" || !state.data) return;
+
+  state.isOpeningTransitioning = true;
+  els.enterDoorBtn.disabled = true;
+  els.openingStatus.textContent = "雨街正在换场……";
+
+  if (prefersReducedMotion()) {
+    finishOpeningStreetTransition();
+    return;
+  }
+
+  const transitionPath = getAssetPath0427("opening.streetToBarTransition");
+  if (!transitionPath) {
+    finishOpeningStreetTransition();
+    return;
+  }
+
+  showOpeningTransitionGif(transitionPath)
+    .then(() => {
+      if (!state.isOpeningTransitioning) return;
+      els.openingTransitionLayer.hidden = false;
+      window.requestAnimationFrame(() => {
+        els.openingTransitionLayer.classList.add("is-visible");
+      });
+      state.openingTransitionTimer = window.setTimeout(finishOpeningStreetTransition, OPENING_STREET_TRANSITION_MS);
+    })
+    .catch((error) => {
+      debugSfxWarning("opening.streetToBarTransition", error);
+      finishOpeningStreetTransition();
+    });
+}
+
 function startIntro() {
   playSfx("door-bell");
   state.introLineIndex = 0;
@@ -1655,6 +1783,12 @@ function handleResultAction() {
 async function init() {
   try {
     setScreen("opening");
+    loadAssetMap0427()
+      .then((assetMap) => {
+        state.assetMap0427 = assetMap;
+        return applyOpeningAssets();
+      })
+      .catch((error) => debugSfxWarning("asset-map-0427", error));
     state.data = await loadGameData();
     state.assetManifest = await loadAssetManifest();
     state.collection = loadCollection();
@@ -1664,7 +1798,7 @@ async function init() {
     updateSacrificeSlots();
     els.enterDoorBtn.disabled = false;
     els.openingStatus.textContent = "雨还在下，门已经虚掩。";
-    els.enterDoorBtn.addEventListener("click", startIntro);
+    els.enterDoorBtn.addEventListener("click", startOpeningStreetTransition);
     els.catIntroScreen.addEventListener("click", continueIntro);
     els.expandedCardFlowBtn.addEventListener("click", showCategorySelection);
     els.cardFlowBackBtn.addEventListener("click", handleCardFlowBack);

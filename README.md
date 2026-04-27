@@ -11,6 +11,8 @@ cat-fortune-v4 is copied from the stable V3 baseline and will focus on the final
 - audio later
 - CN/EN toggle near final polish
 
+V4 Step 1 is complete in the current baseline: the app sits inside a responsive 4:3 game stage, loads the Meowracle Hat opening cover and PUSH image button from the 0427 asset map, keeps animated rain over the cover, plays the street-to-bar GIF transition after PUSH, and falls back safely if mapped opening assets fail to load.
+
 ## CSV Runtime Flow
 
 Editable content lives in `cat_fortune_csv_exports/`. The browser does not parse CSV files directly; run the compile step to generate the static runtime payload:

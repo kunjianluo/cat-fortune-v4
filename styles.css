@@ -7,6 +7,8 @@
   --pixel-border: 4px solid #000;
   --panel-bg: rgba(255, 255, 255, 0.08);
   --panel-border: 2px solid rgba(241, 196, 15, 0.85);
+  --opening-cover-bg: none;
+  --opening-push-img: none;
 }
 
 * {
@@ -20,18 +22,51 @@ body {
 }
 
 body {
-  background-color: var(--night-bg);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(77, 231, 255, 0.08), transparent 34%),
+    #050610;
   color: var(--text-white);
   font-family: "ZCOOL XiaoWei", "Courier New", cursive;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.game-stage {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(1200px, calc(100vw - 32px));
+  aspect-ratio: 4 / 3;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100svh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 79, 216, 0.08), transparent 30%),
+    linear-gradient(180deg, #11142a 0%, #090914 100%);
+  border: 2px solid rgba(241, 196, 15, 0.44);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 24px 80px rgba(0, 0, 0, 0.58);
+}
+
+@media (min-aspect-ratio: 4 / 3) {
+  .game-stage {
+    width: auto;
+    height: min(900px, calc(100vh - 32px));
+    height: min(900px, calc(100svh - 32px));
+  }
 }
 
 .opening-screen,
 .cat-intro-screen {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 1500;
   display: flex;
@@ -42,9 +77,14 @@ body {
 }
 
 .opening-screen {
-  background:
+  background-image:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(2, 3, 8, 0.22) 68%, rgba(2, 3, 8, 0.58) 100%),
+    var(--opening-cover-bg),
     radial-gradient(circle at 50% 30%, rgba(255, 79, 216, 0.12), transparent 28%),
     linear-gradient(180deg, #050610 0%, #11142a 48%, #05050b 100%);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .cat-intro-screen {
@@ -62,30 +102,49 @@ body {
 .rain-layer::before,
 .rain-layer::after {
   position: absolute;
-  inset: -80px 0;
+  inset: -120px 0;
   content: "";
   pointer-events: none;
-  background-image: repeating-linear-gradient(
-    100deg,
-    rgba(255, 255, 255, 0.18) 0,
-    rgba(255, 255, 255, 0.18) 1px,
-    transparent 1px,
-    transparent 18px
-  );
-  transform: translateY(-32px);
-  animation: rain-fall 1.6s linear infinite;
+  background-image:
+    repeating-linear-gradient(
+      92deg,
+      transparent 0,
+      transparent 28px,
+      rgba(255, 255, 255, 0.72) 29px,
+      rgba(255, 255, 255, 0.72) 31px,
+      transparent 32px,
+      transparent 58px
+    ),
+    repeating-linear-gradient(
+      88deg,
+      transparent 0,
+      transparent 46px,
+      rgba(255, 255, 255, 0.38) 47px,
+      rgba(255, 255, 255, 0.38) 48px,
+      transparent 49px,
+      transparent 92px
+    );
+  background-size: 58px 120px, 92px 160px;
+  opacity: 0.46;
+  transform: translateY(-40px) skewX(-5deg);
+  animation: v4-rain-fall 0.9s linear infinite;
+  mix-blend-mode: screen;
 }
 
 .rain-layer::before {
-  opacity: 0.4;
-  transform: translateY(-56px) translateX(42px);
-  animation-duration: 2.2s;
+  opacity: 0.3;
+  transform: translateY(-68px) translateX(42px) skewX(-4deg);
+  animation-duration: 1.25s;
 }
 
 .rain-layer::after {
   opacity: 0.24;
-  transform: translateY(-20px) translateX(-36px);
-  animation-duration: 1.2s;
+  transform: translateY(-28px) translateX(-36px) skewX(-7deg);
+  animation-duration: 0.72s;
+}
+
+.has-opening-cover-asset .street-silhouette {
+  display: none;
 }
 
 .street-silhouette {
@@ -131,6 +190,15 @@ body {
   z-index: 1;
   width: min(100%, 560px);
   text-align: center;
+  padding: 16px;
+}
+
+.has-opening-cover-asset .opening-content {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  pointer-events: none;
 }
 
 .neon-kicker {
@@ -164,6 +232,47 @@ body {
   transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
+.door-btn {
+  position: relative;
+  min-width: 150px;
+  min-height: 52px;
+}
+
+.door-btn-label {
+  position: relative;
+  z-index: 1;
+}
+
+.has-opening-push-asset .door-btn {
+  position: absolute;
+  top: 66%;
+  left: 50%;
+  width: clamp(132px, 18vw, 224px);
+  min-width: 0;
+  aspect-ratio: 2.8 / 1;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-image: var(--opening-push-img);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.26)) drop-shadow(0 0 18px rgba(241, 196, 15, 0.28));
+}
+
+.has-opening-push-asset .door-btn-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .door-btn:hover,
 .door-btn:focus-visible,
 .intro-continue-btn:hover,
@@ -175,10 +284,48 @@ body {
   transform: translateY(-1px);
 }
 
+.has-opening-push-asset .door-btn:hover,
+.has-opening-push-asset .door-btn:focus-visible {
+  background-color: transparent;
+  background-image: var(--opening-push-img);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  color: transparent;
+  box-shadow: none;
+  outline: 2px solid rgba(255, 248, 216, 0.72);
+  outline-offset: 6px;
+  transform: translate(-50%, -50%);
+  animation: push-button-shake 0.26s ease both;
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.44)) drop-shadow(0 0 24px rgba(241, 196, 15, 0.48));
+}
+
+.has-opening-push-asset .door-btn:active {
+  background-color: transparent;
+  background-image: var(--opening-push-img);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  box-shadow: none;
+  outline: none;
+  transform: translate(-50%, -50%) scale(0.96);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.36)) drop-shadow(0 0 20px rgba(241, 196, 15, 0.38));
+}
+
 .door-btn:disabled {
   cursor: wait;
   opacity: 0.55;
   transform: none;
+}
+
+.has-opening-push-asset .door-btn:disabled {
+  animation: none;
+  background-image: var(--opening-push-img);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  transform: translate(-50%, -50%);
+  filter: grayscale(0.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.18));
 }
 
 .opening-status {
@@ -186,6 +333,45 @@ body {
   margin-top: 16px;
   color: #d8d8d8;
   font-size: 12px;
+}
+
+.opening-transition-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #03030a;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.opening-transition-layer[hidden] {
+  display: none;
+}
+
+.opening-transition-layer.is-visible {
+  opacity: 1;
+}
+
+.opening-transition-gif {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.opening-transition-fallback {
+  position: absolute;
+  inset: auto 24px 28px;
+  color: rgba(255, 248, 216, 0.72);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.86);
 }
 
 .intro-stage {
@@ -240,13 +426,32 @@ body {
   color: var(--shop-gold);
 }
 
-@keyframes rain-fall {
+@keyframes v4-rain-fall {
   from {
     background-position: 0 0;
   }
 
   to {
-    background-position: 0 72px;
+    background-position: 0 120px, 0 160px;
+  }
+}
+
+@keyframes push-button-shake {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  28% {
+    transform: translate(calc(-50% - 2px), calc(-50% + 1px)) rotate(-1deg);
+  }
+
+  56% {
+    transform: translate(calc(-50% + 2px), calc(-50% - 1px)) rotate(1deg);
+  }
+
+  78% {
+    transform: translate(calc(-50% - 1px), -50%) rotate(-0.5deg);
   }
 }
 
@@ -315,12 +520,14 @@ body {
   flex: 1;
   width: 100%;
   max-width: 980px;
+  min-height: 0;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 16px 16px 28px;
+  overflow: auto;
 }
 
 #start-screen {
@@ -2782,6 +2989,11 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .submit-btn.is-judging,
+  .rain-layer,
+  .rain-layer::before,
+  .rain-layer::after,
+  .has-opening-push-asset .door-btn:hover,
+  .has-opening-push-asset .door-btn:focus-visible,
   .sacrifice-counter.is-judging::after,
   .sacrifice-slot.filled.is-judging,
   .judgement-card,
@@ -2816,6 +3028,18 @@ body {
     transition: none;
     filter: none;
     transform: none;
+  }
+
+  .rain-layer,
+  .rain-layer::before,
+  .rain-layer::after {
+    animation: none !important;
+    background-position: 0 0;
+    opacity: 0.22;
+  }
+
+  .opening-transition-layer {
+    transition: none;
   }
 
   .card-flow-panel.is-transitioning {
@@ -2881,6 +3105,16 @@ body {
 }
 
 @media (max-width: 760px) {
+  body {
+    padding: 8px;
+  }
+
+  .game-stage {
+    width: min(1200px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+    max-height: calc(100svh - 16px);
+  }
+
   #header {
     padding-right: 104px;
   }
@@ -2937,6 +3171,14 @@ body {
   .penalty-field {
     height: min(42vh, 230px);
     min-height: 190px;
+  }
+}
+
+@media (max-width: 760px) and (min-aspect-ratio: 4 / 3) {
+  .game-stage {
+    width: auto;
+    height: min(900px, calc(100vh - 16px));
+    height: min(900px, calc(100svh - 16px));
   }
 }
 
