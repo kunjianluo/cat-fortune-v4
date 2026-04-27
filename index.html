@@ -37,15 +37,19 @@
       </div>
     </section>
 
-    <section id="cat-intro-screen" class="cat-intro-screen" aria-labelledby="intro-dialogue" hidden>
-      <div class="intro-stage">
-        <div class="intro-cat" aria-hidden="true">🐱</div>
-        <div class="intro-dialogue-box">
-          <p id="intro-dialogue">（哈欠）...又是这个点，又是这种味道。</p>
-          <button id="intro-continue-btn" class="intro-continue-btn" type="button">继续</button>
+    <section id="cat-intro-screen" class="cat-intro-screen cat-speech-intro" aria-labelledby="intro-dialogue" tabindex="-1" hidden>
+      <div class="intro-stage cat-speech-stage">
+        <div class="intro-dialogue-box cat-speech-bubble">
+          <p id="intro-dialogue" aria-live="polite">（哈欠）……又是这个点，又是这种味道。</p>
+          <button id="intro-continue-btn" class="intro-continue-btn cat-speech-continue" type="button">继续</button>
         </div>
       </div>
     </section>
+
+    <div id="cat-master-entrance-layer" class="cat-master-entrance-layer" aria-hidden="true" hidden>
+      <img id="cat-master-entrance-image" class="cat-master-entrance-image" alt="" />
+      <div class="cat-master-entrance-fallback" aria-hidden="true">猫大师正在醒来。</div>
+    </div>
 
     <div id="header">
       <h2>大馋猫：深夜占卜</h2>
@@ -66,6 +70,13 @@
         </div>
 
         <div id="card-flow-panel" class="card-flow-panel" hidden>
+          <div id="level1-info-bar" class="level1-info-bar" hidden>
+            <button id="level1-home-btn" class="level1-home-btn" type="button" aria-label="返回开始">
+              <img id="level1-home-icon" class="level1-info-icon" alt="" />
+            </button>
+            <div class="level1-info-prompt">Choose your mood:</div>
+            <img id="level1-logo-icon" class="level1-info-logo" alt="" aria-hidden="true" />
+          </div>
           <div class="card-flow-oracle" aria-hidden="true">
             <div class="star-circle">
               <span class="star-dot"></span>

@@ -11,15 +11,19 @@ const state = {
   isShopEntering: false,
   isPenaltyFinishing: false,
   isOpeningTransitioning: false,
+  isCatMasterEntranceActive: false,
+  hasStartedIntro: false,
   shopEntryTimer: null,
   catHairTimer: null,
   openingTransitionTimer: null,
+  catMasterEntranceTimer: null,
   nextStageAssetsPromise: null,
   nextStageAssetsReady: false,
   nextStageAssetsDone: 0,
   nextStageAssetsTotal: 0,
   assetManifest: null,
   assetMap0427: null,
+  level1VisualMap0427: null,
   audioAssets: new Map(),
   audioCache: new Map(),
   cardFlow: {
@@ -31,7 +35,7 @@ const state = {
 };
 
 const introLines = [
-  "（哈欠）...又是这个点，又是这种味道。",
+  "（哈欠）……又是这个点，又是这种味道。",
   "说吧，今晚是什么东西让你这只两脚兽消化不良？",
 ];
 
@@ -55,6 +59,9 @@ const COLLECTION_STORAGE_KEY = "cat_fortune_v3_collection";
 const collectionFlyMs = 720;
 // Fixed demo timing for transformation_1.gif; GIF ended events are not reliable for <img>.
 const OPENING_STREET_TRANSITION_MS = 5000;
+const CAT_MASTER_REST_FRAME_MS = 800;
+const CAT_MASTER_TRANSFORMATION_MS = 8000;
+const CAT_MASTER_WIZARD_SETTLE_MS = 700;
 const INITIAL_OPENING_PRELOAD_TIMEOUT_MS = 8000;
 const NEXT_STAGE_PRELOAD_TIMEOUT_MS = 8000;
 const CRITICAL_OPENING_ASSET_KEYS = [
@@ -143,6 +150,8 @@ const els = {
   openingStatus: document.getElementById("opening-status"),
   openingTransitionLayer: document.getElementById("opening-transition-layer"),
   openingTransitionGif: document.getElementById("opening-transition-gif"),
+  catMasterEntranceLayer: document.getElementById("cat-master-entrance-layer"),
+  catMasterEntranceImage: document.getElementById("cat-master-entrance-image"),
   catIntroScreen: document.getElementById("cat-intro-screen"),
   introDialogue: document.getElementById("intro-dialogue"),
   introContinueBtn: document.getElementById("intro-continue-btn"),
@@ -156,6 +165,10 @@ const els = {
   cardFlowSubtitle: document.getElementById("card-flow-subtitle"),
   cardFlowGrid: document.getElementById("card-flow-grid"),
   cardFlowLightOrb: document.getElementById("card-flow-light-orb"),
+  level1InfoBar: document.getElementById("level1-info-bar"),
+  level1HomeBtn: document.getElementById("level1-home-btn"),
+  level1HomeIcon: document.getElementById("level1-home-icon"),
+  level1LogoIcon: document.getElementById("level1-logo-icon"),
   issuePlayScreen: document.getElementById("issue-play-screen"),
   issueTitle: document.getElementById("issue-play-title"),
   issueShopAnchor: document.getElementById("issue-shop-anchor"),
@@ -224,6 +237,17 @@ async function loadAssetMap0427() {
     return response.json();
   } catch (error) {
     debugSfxWarning("asset-map-0427", error);
+    return null;
+  }
+}
+
+async function loadLevel1VisualMap0427() {
+  try {
+    const response = await fetch("./content/level1-visual-map-0427.json", { cache: "no-store" });
+    if (!response.ok) return null;
+    return response.json();
+  } catch (error) {
+    debugSfxWarning("level1-visual-map-0427", error);
     return null;
   }
 }
@@ -709,6 +733,7 @@ function countMatchedIngredients(selection, recipe) {
 function setScreen(screen) {
   const selectionScreens = ["seed_selection", "category_selection", "subcategory_selection", "issue_selection"];
   const isCardFlowScreen = ["category_selection", "subcategory_selection", "issue_selection"].includes(screen);
+  const isLevel1CardScreen = screen === "category_selection";
 
   state.screen = screen;
   els.openingScreen.hidden = screen !== "opening";
@@ -717,6 +742,8 @@ function setScreen(screen) {
   els.seedSelectionPanel.hidden = screen !== "seed_selection";
   els.cardFlowPanel.hidden = !isCardFlowScreen;
   els.cardFlowPanel.classList.toggle("is-oracle-mode", isCardFlowScreen);
+  els.cardFlowPanel.classList.toggle("is-level1-card-stage", isLevel1CardScreen);
+  els.level1InfoBar.hidden = !isLevel1CardScreen;
   els.overlay.style.display = screen === "result" ? "flex" : "none";
 }
 
@@ -988,6 +1015,22 @@ function renderIssueButtons() {
 
 function clearCardFlowGrid() {
   els.cardFlowGrid.innerHTML = "";
+  els.cardFlowGrid.classList.remove("is-level1-image-grid");
+}
+
+function applyLevel1InfoBarAssets() {
+  const homePath = getAssetPath0427("ui.home");
+  const logoPath = getAssetPath0427("ui.logo");
+
+  if (homePath) {
+    els.level1HomeIcon.src = homePath;
+  }
+  els.level1HomeIcon.hidden = !homePath;
+
+  if (logoPath) {
+    els.level1LogoIcon.src = logoPath;
+  }
+  els.level1LogoIcon.hidden = !logoPath;
 }
 
 function prefersReducedMotion() {
@@ -1099,6 +1142,51 @@ function createCardFlowButton(className, titleText, subtitleText, onClick, optio
   return button;
 }
 
+function getLevel1VisualConfig(level1Name) {
+  const items = state.level1VisualMap0427?.items;
+  if (!Array.isArray(items)) return null;
+  return items.find((item) => item?.level1 === level1Name && item.asset_key) || null;
+}
+
+function createLevel1CategoryCard(category) {
+  const visualConfig = getLevel1VisualConfig(category.title);
+  const imagePath = visualConfig ? getAssetPath0427(visualConfig.asset_key) : "";
+  if (!imagePath) {
+    return createCardFlowButton(
+      "emotion-category-card",
+      category.title,
+      category.subtitle,
+      (card) => selectCardThen(card, () => transitionCardFlow(() => renderSubcategorySelection(category.id))),
+      { symbol: category.symbol },
+    );
+  }
+
+  const button = document.createElement("button");
+  button.className = "emotion-category-card emotion-category-image-card";
+  button.type = "button";
+  button.style.setProperty("--card-index", "0");
+  button.setAttribute("aria-label", category.title);
+  button.setAttribute("aria-pressed", "false");
+
+  const image = document.createElement("img");
+  image.className = "emotion-category-card-image";
+  image.src = imagePath;
+  image.alt = "";
+  image.loading = "eager";
+  image.draggable = false;
+  image.setAttribute("aria-hidden", "true");
+
+  const label = document.createElement("span");
+  label.className = "emotion-category-card-label";
+  label.textContent = category.title;
+
+  button.append(image, label);
+  button.addEventListener("click", () => (
+    selectCardThen(button, () => transitionCardFlow(() => renderSubcategorySelection(category.id)))
+  ));
+  return button;
+}
+
 function appendCardFlowNote(text) {
   const note = document.createElement("div");
   note.className = "card-flow-note";
@@ -1196,8 +1284,13 @@ function getCardFlowTitleByIssueId(issueId) {
 
 function renderCategorySelection() {
   const categories = getCardFlowCategories();
+  const hasLevel1ImageCards = categories.some((category) => {
+    const visualConfig = getLevel1VisualConfig(category.title);
+    return Boolean(visualConfig && getAssetPath0427(visualConfig.asset_key));
+  });
 
   setScreen("category_selection");
+  applyLevel1InfoBarAssets();
   els.cardFlowBackBtn.textContent = "返回五张默认卡";
   els.cardFlowTitle.textContent = "选择一种心绪方向";
   els.cardFlowSubtitle.textContent = categories.length
@@ -1210,14 +1303,14 @@ function renderCategorySelection() {
     return;
   }
 
-  categories.forEach((category) => {
-    const card = createCardFlowButton(
-      "emotion-category-card",
-      category.title,
-      category.subtitle,
-      (card) => selectCardThen(card, () => transitionCardFlow(() => renderSubcategorySelection(category.id))),
-      { symbol: category.symbol },
-    );
+  els.cardFlowGrid.classList.toggle("is-level1-image-grid", hasLevel1ImageCards);
+
+  categories.forEach((category, index) => {
+    const card = createLevel1CategoryCard(category);
+    card.style.setProperty("--card-index", index);
+    card.style.setProperty("--card-delay", `${70 + (index * 72)}ms`);
+    card.style.setProperty("--fly-x", `${(2 - index) * 118}%`);
+    card.style.setProperty("--fly-rotate", `${(index - 2) * 5}deg`);
     els.cardFlowGrid.appendChild(card);
   });
 }
@@ -1327,6 +1420,11 @@ function handleCardFlowBack() {
   showSeedSelection();
 }
 
+function returnToOpeningFromLevel1() {
+  playSfx("click");
+  window.location.reload();
+}
+
 function hideOpeningTransitionGif() {
   if (state.openingTransitionTimer) {
     window.clearTimeout(state.openingTransitionTimer);
@@ -1339,12 +1437,121 @@ function hideOpeningTransitionGif() {
   els.openingTransitionGif.removeAttribute("src");
 }
 
+function waitCatMasterEntranceStep(durationMs) {
+  const duration = Math.max(0, durationMs);
+  if (state.catMasterEntranceTimer) {
+    window.clearTimeout(state.catMasterEntranceTimer);
+    state.catMasterEntranceTimer = null;
+  }
+  if (duration === 0) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    state.catMasterEntranceTimer = window.setTimeout(() => {
+      state.catMasterEntranceTimer = null;
+      resolve();
+    }, duration);
+  });
+}
+
+function showCatMasterEntranceLayer() {
+  els.catMasterEntranceLayer.hidden = false;
+  window.requestAnimationFrame(() => {
+    els.catMasterEntranceLayer.classList.add("is-visible");
+  });
+}
+
+function hideCatMasterEntranceLayer() {
+  if (state.catMasterEntranceTimer) {
+    window.clearTimeout(state.catMasterEntranceTimer);
+    state.catMasterEntranceTimer = null;
+  }
+
+  els.catMasterEntranceLayer.classList.remove("is-visible", "is-switching");
+  els.catMasterEntranceLayer.hidden = true;
+  els.catMasterEntranceImage.onload = null;
+  els.catMasterEntranceImage.onerror = null;
+  els.catMasterEntranceImage.removeAttribute("src");
+  delete els.catMasterEntranceLayer.dataset.phase;
+}
+
+async function setCatMasterEntranceImage(assetKey, phase) {
+  const path = getAssetPath0427(assetKey);
+  if (!path || !els.catMasterEntranceLayer || !els.catMasterEntranceImage) return false;
+
+  const loadedPath = await preloadImageAsset(path, assetKey, NEXT_STAGE_PRELOAD_TIMEOUT_MS);
+  if (!loadedPath || !state.isCatMasterEntranceActive) return false;
+
+  if (!prefersReducedMotion() && els.catMasterEntranceLayer.classList.contains("is-visible")) {
+    els.catMasterEntranceLayer.classList.add("is-switching");
+    await waitCatMasterEntranceStep(120);
+  }
+
+  if (!state.isCatMasterEntranceActive) return false;
+  els.catMasterEntranceLayer.dataset.phase = phase;
+  els.catMasterEntranceImage.src = "";
+  els.catMasterEntranceImage.src = loadedPath;
+  showCatMasterEntranceLayer();
+
+  window.requestAnimationFrame(() => {
+    els.catMasterEntranceLayer.classList.remove("is-switching");
+  });
+  return true;
+}
+
+function showCatMasterRestFrame() {
+  return setCatMasterEntranceImage("opening.barRestBackground", "rest");
+}
+
+function showCatMasterTransformation() {
+  return setCatMasterEntranceImage("opening.catTransformationGif", "transformation");
+}
+
+function showCatMasterWizardFrame() {
+  return setCatMasterEntranceImage("opening.barWizardBackground", "wizard");
+}
+
+function finishCatMasterEntranceSequence() {
+  if (!state.isCatMasterEntranceActive && state.hasStartedIntro) return;
+  state.isCatMasterEntranceActive = false;
+  hideCatMasterEntranceLayer();
+  startIntro();
+}
+
+async function startCatMasterEntranceSequence() {
+  if (state.isCatMasterEntranceActive || state.hasStartedIntro) return;
+
+  state.isCatMasterEntranceActive = true;
+  els.enterDoorBtn.disabled = true;
+
+  try {
+    if (prefersReducedMotion()) {
+      const didShowWizard = await showCatMasterWizardFrame();
+      if (didShowWizard) await waitCatMasterEntranceStep(240);
+      finishCatMasterEntranceSequence();
+      return;
+    }
+
+    const didShowRest = await showCatMasterRestFrame();
+    if (didShowRest) await waitCatMasterEntranceStep(CAT_MASTER_REST_FRAME_MS);
+
+    const didShowTransformation = await showCatMasterTransformation();
+    if (didShowTransformation) await waitCatMasterEntranceStep(CAT_MASTER_TRANSFORMATION_MS);
+
+    const didShowWizard = await showCatMasterWizardFrame();
+    if (didShowWizard) await waitCatMasterEntranceStep(CAT_MASTER_WIZARD_SETTLE_MS);
+  } catch (error) {
+    debugSfxWarning("cat-master-entrance", error);
+  }
+
+  finishCatMasterEntranceSequence();
+}
+
 async function finishOpeningStreetTransition() {
   if (!state.isOpeningTransitioning) return;
   state.isOpeningTransitioning = false;
   hideOpeningTransitionGif();
   await ensureNextStageAssetsReadyBeforeIntro();
-  startIntro();
+  startCatMasterEntranceSequence();
 }
 
 function showOpeningTransitionGif(path) {
@@ -1362,7 +1569,13 @@ function showOpeningTransitionGif(path) {
 }
 
 function startOpeningStreetTransition() {
-  if (state.isOpeningTransitioning || state.screen !== "opening" || !state.data) return;
+  if (
+    state.isOpeningTransitioning
+    || state.isCatMasterEntranceActive
+    || state.hasStartedIntro
+    || state.screen !== "opening"
+    || !state.data
+  ) return;
 
   state.isOpeningTransitioning = true;
   els.enterDoorBtn.disabled = true;
@@ -1394,24 +1607,66 @@ function startOpeningStreetTransition() {
     });
 }
 
-function startIntro() {
-  playSfx("door-bell");
-  state.introLineIndex = 0;
-  els.introDialogue.textContent = introLines[state.introLineIndex];
-  els.introContinueBtn.textContent = "继续";
-  setScreen("cat_intro");
+function applyCatMasterSpeechIntroAssets() {
+  const root = document.documentElement;
+  const wizardBackgroundPath = getAssetPath0427("opening.barWizardBackground");
+  const dialogBoxPath = getAssetPath0427("ui.dialogBox");
+
+  root.classList.toggle("has-cat-speech-bg", Boolean(wizardBackgroundPath));
+  root.classList.toggle("has-cat-dialog-box", Boolean(dialogBoxPath));
+
+  if (wizardBackgroundPath) {
+    root.style.setProperty("--cat-speech-bg", toCssUrl(wizardBackgroundPath));
+  }
+
+  if (dialogBoxPath) {
+    root.style.setProperty("--cat-dialog-box-img", toCssUrl(dialogBoxPath));
+  }
 }
 
-function continueIntro() {
-  playSfx("click");
-  if (state.introLineIndex === 0) {
-    state.introLineIndex = 1;
-    els.introDialogue.textContent = introLines[state.introLineIndex];
-    els.introContinueBtn.textContent = "选心结";
+function renderCatMasterSpeechIntro() {
+  applyCatMasterSpeechIntroAssets();
+  els.introDialogue.textContent = introLines[state.introLineIndex] || "";
+  els.introContinueBtn.textContent = state.introLineIndex === introLines.length - 1 ? "抽牌" : "继续";
+  setScreen("cat_intro");
+  window.requestAnimationFrame(() => {
+    els.catIntroScreen.focus({ preventScroll: true });
+  });
+}
+
+function finishCatMasterSpeechIntro() {
+  state.cardFlow.selectedCategory = "";
+  state.cardFlow.selectedSubcategory = "";
+
+  if (!getCardFlowCategories().length) {
+    showSeedSelection();
     return;
   }
 
-  showSeedSelection();
+  transitionCardFlow(renderCategorySelection);
+}
+
+function startIntro() {
+  if (state.hasStartedIntro) return;
+  state.hasStartedIntro = true;
+  playSfx("door-bell");
+  state.introLineIndex = 0;
+  renderCatMasterSpeechIntro();
+}
+
+function advanceCatMasterSpeechIntro() {
+  playSfx("click");
+  if (state.introLineIndex < introLines.length - 1) {
+    state.introLineIndex += 1;
+    renderCatMasterSpeechIntro();
+    return;
+  }
+
+  finishCatMasterSpeechIntro();
+}
+
+function continueIntro() {
+  advanceCatMasterSpeechIntro();
 }
 
 function showSeedSelection() {
@@ -1963,6 +2218,16 @@ async function init() {
         markInitialLoaderStep();
         return null;
       });
+    const level1VisualMapPromise = loadLevel1VisualMap0427()
+      .then((visualMap) => {
+        state.level1VisualMap0427 = visualMap;
+        return visualMap;
+      })
+      .catch((error) => {
+        debugSfxWarning("level1-visual-map-0427", error);
+        state.level1VisualMap0427 = null;
+        return null;
+      });
     const criticalOpeningAssetsPromise = assetMapPromise.then(() => (
       preloadCriticalOpeningAssets(markInitialLoaderStep)
     ));
@@ -1970,6 +2235,7 @@ async function init() {
     await Promise.all([
       runtimeDataPromise,
       assetMapPromise,
+      level1VisualMapPromise,
       criticalOpeningAssetsPromise,
     ]);
 
@@ -1987,6 +2253,7 @@ async function init() {
     els.catIntroScreen.addEventListener("click", continueIntro);
     els.expandedCardFlowBtn.addEventListener("click", showCategorySelection);
     els.cardFlowBackBtn.addEventListener("click", handleCardFlowBack);
+    els.level1HomeBtn.addEventListener("click", returnToOpeningFromLevel1);
     els.collectionBookButton.addEventListener("click", openCollectionBook);
     els.collectionBookClose.addEventListener("click", closeCollectionBook);
     els.collectionBookOverlay.addEventListener("click", (event) => {
@@ -1995,6 +2262,15 @@ async function init() {
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !els.collectionBookOverlay.hidden) {
         closeCollectionBook();
+      }
+
+      if (
+        state.screen === "cat_intro"
+        && event.target !== els.introContinueBtn
+        && (event.key === "Enter" || event.key === " ")
+      ) {
+        event.preventDefault();
+        advanceCatMasterSpeechIntro();
       }
     });
     els.sacrificeSlots.forEach((slot, index) => {
