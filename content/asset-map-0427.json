@@ -254,6 +254,168 @@
       "match_type": "exact",
       "notes": "Actual folder name contains a space: cat images."
     },
+    "food.beef": {
+      "prd_name": "beef.png",
+      "path": "assets/0427/images/food/beef.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.butter": {
+      "prd_name": "butter.png",
+      "path": "assets/0427/images/food/butter.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.coconut": {
+      "prd_name": "Coconut.png",
+      "path": "assets/0427/images/food/Coconut.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.currySauce": {
+      "prd_name": "Currysauce.png",
+      "path": "assets/0427/images/food/Currysauce.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.fishBalls": {
+      "prd_name": "Fishballs.png",
+      "path": "assets/0427/images/food/Fishballs.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.ginger": {
+      "prd_name": "Ginger.png",
+      "path": "assets/0427/images/food/Ginger.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.glutinousRiceBalls": {
+      "prd_name": "Glutinous rice balls.png",
+      "path": "assets/0427/images/food/Glutinous rice balls.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.lemon": {
+      "prd_name": "lemon.png",
+      "path": "assets/0427/images/food/lemon.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.mango": {
+      "prd_name": "Mango.png",
+      "path": "assets/0427/images/food/Mango.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.milk": {
+      "prd_name": "milk.png",
+      "path": "assets/0427/images/food/milk.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.pineappleBun": {
+      "prd_name": "Pineapplebun.png",
+      "path": "assets/0427/images/food/Pineapplebun.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.pomelo": {
+      "prd_name": "Pomelo.png",
+      "path": "assets/0427/images/food/Pomelo.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.radish": {
+      "prd_name": "Radish.png",
+      "path": "assets/0427/images/food/Radish.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.riceNoodleRoll": {
+      "prd_name": "Ricenoodleroll.png",
+      "path": "assets/0427/images/food/Ricenoodleroll.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.sago": {
+      "prd_name": "Sago.png",
+      "path": "assets/0427/images/food/Sago.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.tea": {
+      "prd_name": "tea.png",
+      "path": "assets/0427/images/food/tea.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.thickNoodles": {
+      "prd_name": "Thicknoodles.png",
+      "path": "assets/0427/images/food/Thicknoodles.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "exact",
+      "notes": ""
+    },
+    "food.coffeeBeans": {
+      "prd_name": "coffee.png",
+      "path": "assets/0427/images/food/coffee.png",
+      "type": "image",
+      "group": "food",
+      "status": "ready",
+      "match_type": "extra",
+      "notes": "Playable ingredient image added outside the food reference table."
+    },
     "catMaster.wizard": {
       "prd_name": "wizard cat.png",
       "path": "assets/0427/images/cat images/wizard cat.png",

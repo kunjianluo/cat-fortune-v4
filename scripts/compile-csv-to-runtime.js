@@ -21,6 +21,7 @@ const files = {
   assetPlaceholders: "cat_fortune_asset_placeholders.csv",
   taxonomyReview: "cat_fortune_issue_taxonomy_review.csv",
   cardFlow: "cat_fortune_card_flow_40_review.csv",
+  riddles0427: "cat_fortune_riddles_0427.csv",
   manifest: "cat_fortune_csv_manifest.csv",
 };
 
@@ -119,6 +120,16 @@ function byKey(rows, key) {
   return new Map(rows.filter((row) => row[key]).map((row) => [row[key], row]));
 }
 
+function duplicateValues(values) {
+  const seen = new Set();
+  const duplicates = new Set();
+  for (const value of values.filter(Boolean)) {
+    if (seen.has(value)) duplicates.add(value);
+    seen.add(value);
+  }
+  return Array.from(duplicates);
+}
+
 function allCsvFiles() {
   return fs.readdirSync(csvDir)
     .filter((fileName) => fileName.endsWith(".csv"))
@@ -139,6 +150,7 @@ assertUnique(sourceRows.issueMaster, "issue_id", "full issue master", errors);
 assertUnique(sourceRows.recipes, "issue_id", "recipes", errors);
 assertUnique(sourceRows.wisdom, "issue_id", "success wisdom", errors);
 assertUnique(sourceRows.nonsense, "slip_id", "nonsense slips", errors);
+assertUnique(sourceRows.riddles0427, "issue_id", "PRD 0427 riddles", errors);
 
 const shopById = byKey(sourceRows.shops, "shop_id");
 const ingredientById = byKey(sourceRows.ingredients, "ingredient_id");
@@ -146,6 +158,33 @@ const ingredientByName = byKey(sourceRows.ingredients, "ingredient_name");
 const issueById = byKey(sourceRows.issueMaster, "issue_id");
 const recipeByIssue = byKey(sourceRows.recipes, "issue_id");
 const wisdomByIssue = byKey(sourceRows.wisdom, "issue_id");
+const prd0427RiddleByIssue = byKey(sourceRows.riddles0427, "issue_id");
+const expectedPrd0427IssueIds = Array.from({ length: 40 }, (_value, index) => `Q${String(index + 1).padStart(2, "0")}`);
+const prd0427RiddleIssueIds = sourceRows.riddles0427.map((row) => row.issue_id).filter(Boolean);
+const prd0427RiddleValidation = {
+  consumed: true,
+  loaded_count: sourceRows.riddles0427.length,
+  expected_count: 40,
+  missing_issue_ids: expectedPrd0427IssueIds.filter((issueId) => !prd0427RiddleByIssue.has(issueId)),
+  duplicate_issue_ids: duplicateValues(prd0427RiddleIssueIds),
+  unknown_issue_ids: prd0427RiddleIssueIds.filter((issueId) => !expectedPrd0427IssueIds.includes(issueId)),
+  blank_riddle_issue_ids: sourceRows.riddles0427
+    .filter((row) => !row.cat_riddle)
+    .map((row) => row.issue_id || "(blank)"),
+};
+
+if (prd0427RiddleValidation.loaded_count !== prd0427RiddleValidation.expected_count) {
+  errors.push(`Expected 40 PRD 0427 riddles; found ${prd0427RiddleValidation.loaded_count}.`);
+}
+for (const issueId of prd0427RiddleValidation.missing_issue_ids) {
+  errors.push(`PRD 0427 riddles CSV is missing ${issueId}.`);
+}
+for (const issueId of prd0427RiddleValidation.unknown_issue_ids) {
+  errors.push(`PRD 0427 riddles CSV contains unknown issue_id ${issueId}.`);
+}
+for (const issueId of prd0427RiddleValidation.blank_riddle_issue_ids) {
+  errors.push(`PRD 0427 riddles CSV has blank cat_riddle for ${issueId}.`);
+}
 
 const ingredients_by_shop = {};
 for (const row of sourceRows.ingredients) {
@@ -264,6 +303,8 @@ const success_wisdom = sourceRows.wisdom.map((row) => ({
 
 const issues = sourceRows.issueMaster.map((row, index) => {
   const recipe = recipeRuntimeByIssue.get(row.issue_id);
+  const prd0427Riddle = prd0427RiddleByIssue.get(row.issue_id)?.cat_riddle || "";
+  const explicitTasteDescription = row.taste_description || row.taste_prompt || "";
   if (!recipe) errors.push(`Issue ${row.issue_id} is missing from recipes CSV.`);
   if (!wisdomByIssue.has(row.issue_id)) errors.push(`Issue ${row.issue_id} is missing from success wisdom CSV.`);
 
@@ -283,8 +324,9 @@ const issues = sourceRows.issueMaster.map((row, index) => {
     id: row.issue_id,
     title: row.canonical_title,
     title_source: row.title_source,
-    riddle_text: row.canonical_riddle,
-    riddle_source: row.riddle_source,
+    riddle_text: prd0427Riddle || row.canonical_riddle,
+    riddle_source: prd0427Riddle ? "prd_0427_appendix_zero" : row.riddle_source,
+    taste_description: explicitTasteDescription || prd0427Riddle,
     internal_id_visible_to_player: toBool(row.internal_id_visible_to_player),
     shop_id,
     shop_name: row.shop_name_if_same_shop || shopById.get(shop_id)?.front_name || "",
@@ -460,6 +502,7 @@ const runtimeData = {
     ],
     warnings,
     seed_issue_validation: seedValidation,
+    prd_0427_riddle_validation: prd0427RiddleValidation,
   },
   seed_issues,
   issues,
@@ -512,6 +555,10 @@ console.log(`Card flow items: ${card_flow_items.length}`);
 console.log(`Public card flow items: ${publicCardFlowItems.length}`);
 console.log(`Card flow level1 groups: ${cardFlowLevel1Count}`);
 console.log(`Default seeds in card flow: ${cardFlowDefaultSeedCount}`);
+console.log(`PRD 0427 riddles CSV consumed: ${prd0427RiddleValidation.consumed ? "yes" : "no"}`);
+console.log(`PRD 0427 riddles loaded: ${prd0427RiddleValidation.loaded_count}`);
+console.log(`PRD 0427 missing issue ids: ${prd0427RiddleValidation.missing_issue_ids.length ? prd0427RiddleValidation.missing_issue_ids.join(", ") : "none"}`);
+console.log(`PRD 0427 duplicate issue ids: ${prd0427RiddleValidation.duplicate_issue_ids.length ? prd0427RiddleValidation.duplicate_issue_ids.join(", ") : "none"}`);
 console.log("");
 console.log("Seed issue validation:");
 console.log(`- every seed issue maps to a valid full issue: ${seedValidation.all_map_to_full_issue ? "yes" : "no"}`);

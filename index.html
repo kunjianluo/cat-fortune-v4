@@ -18,14 +18,12 @@
 
   <main id="game-stage" class="game-stage">
     <section id="opening-screen" class="opening-screen" aria-labelledby="opening-title">
-      <div class="rain-layer" aria-hidden="true"></div>
       <div class="street-silhouette" aria-hidden="true">
         <div class="shop-block shop-block-left"></div>
         <div class="shop-block shop-block-center"></div>
         <div class="shop-block shop-block-right"></div>
       </div>
       <div class="opening-content">
-        <div class="neon-kicker">深夜 · 雨街 · 占卜铺</div>
         <h1 id="opening-title" class="neon-title">大馋猫：深夜占卜</h1>
         <button id="enter-door-btn" class="door-btn" type="button" aria-label="推门而入" disabled>
           <span class="door-btn-label">推门而入</span>
@@ -37,6 +35,17 @@
         <div class="opening-transition-fallback" aria-hidden="true">深夜小店正在换场。</div>
       </div>
     </section>
+
+    <nav id="game-nav" class="game-nav" aria-label="游戏导航" hidden>
+      <button id="global-home-btn" class="nav-icon-btn" type="button" aria-label="返回开始">
+        <img id="global-home-icon" class="nav-icon-img" alt="" />
+        <span class="nav-icon-label">Home</span>
+      </button>
+      <button id="global-return-btn" class="nav-icon-btn" type="button" aria-label="返回上一页">
+        <img id="global-return-icon" class="nav-icon-img" alt="" />
+        <span class="nav-icon-label">Return</span>
+      </button>
+    </nav>
 
     <section id="cat-intro-screen" class="cat-intro-screen cat-speech-intro" aria-labelledby="intro-dialogue" tabindex="-1" hidden>
       <div class="intro-stage cat-speech-stage">
@@ -76,6 +85,9 @@
               <img id="level1-home-icon" class="level1-info-icon" alt="" />
             </button>
             <div class="level1-info-prompt">Choose your mood:</div>
+            <button id="level1-return-btn" class="level1-return-btn" type="button" aria-label="返回上一页">
+              <img id="level1-return-icon" class="level1-info-icon" alt="" />
+            </button>
             <img id="level1-logo-icon" class="level1-info-logo" alt="" aria-hidden="true" />
           </div>
           <div class="card-flow-oracle" aria-hidden="true">

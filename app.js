@@ -75,6 +75,9 @@ const CAT_MASTER_TRANSFORMATION_MS = 8000;
 const CAT_MASTER_WIZARD_SETTLE_MS = 700;
 const INITIAL_CRITICAL_PRELOAD_TIMEOUT_MS = 12000;
 const STAGE_PRELOAD_TIMEOUT_MS = 8000;
+const SHOP_STREET_FADE_OUT_MS = 320;
+const SHOP_INTERIOR_FADE_IN_MS = 360;
+const ISSUE_PROMPT_EMPTY_TEXT = "今晚的味道还没写完。";
 const ASSET_GROUPS = {
   openingCritical: [
     "opening.coverBackground",
@@ -85,6 +88,7 @@ const ASSET_GROUPS = {
     "opening.barWizardBackground",
     "ui.dialogBox",
     "ui.home",
+    "ui.return",
     "ui.logo",
   ],
   level1Cards: [
@@ -94,6 +98,7 @@ const ASSET_GROUPS = {
     "card.city",
     "card.desire",
     "ui.home",
+    "ui.return",
     "ui.logo",
   ],
   tasteAndShopStreet: [
@@ -130,6 +135,26 @@ const ASSET_GROUPS = {
     "punishment.feather",
     "ui.dialogBox",
   ],
+  foodImages: [
+    "food.beef",
+    "food.butter",
+    "food.coconut",
+    "food.currySauce",
+    "food.fishBalls",
+    "food.ginger",
+    "food.glutinousRiceBalls",
+    "food.lemon",
+    "food.mango",
+    "food.milk",
+    "food.pineappleBun",
+    "food.pomelo",
+    "food.radish",
+    "food.riceNoodleRoll",
+    "food.sago",
+    "food.tea",
+    "food.thickNoodles",
+    "food.coffeeBeans",
+  ],
 };
 const SHOP_INTERIOR_GROUP_BY_ID = {
   "dessert-station": "shopInteriorDessert",
@@ -143,6 +168,7 @@ const BACKGROUND_PRELOAD_GROUPS = [
   "shopInteriorIce",
   "shopInteriorStreetStall",
   "resultVisuals",
+  "foodImages",
 ];
 const TASTE_TO_STREET_TRANSITION_MS = 680;
 const WRONG_SHOP_HINT_TEXT = "猫大师摇头：这道味道不在这里。";
@@ -166,6 +192,27 @@ const shopPlayAssetKeys = {
     interior: "shopInterior.streetStall",
     shopkeeper: "shopkeeper.streetStall",
   },
+};
+
+const INGREDIENT_IMAGE_KEY_BY_NAME = {
+  "牛腩": "food.beef",
+  "黄油": "food.butter",
+  "椰浆": "food.coconut",
+  "咖喱酱": "food.currySauce",
+  "鱼蛋": "food.fishBalls",
+  "姜汁": "food.ginger",
+  "汤圆": "food.glutinousRiceBalls",
+  "柠檬片": "food.lemon",
+  "芒果": "food.mango",
+  "黑白淡奶": "food.milk",
+  "菠萝包底": "food.pineappleBun",
+  "柚子": "food.pomelo",
+  "萝卜": "food.radish",
+  "肠粉": "food.riceNoodleRoll",
+  "西米": "food.sago",
+  "浓茶": "food.tea",
+  "粗面": "food.thickNoodles",
+  "咖啡豆": "food.coffeeBeans",
 };
 
 const resultCatAssetKeys = {
@@ -206,7 +253,7 @@ const penaltyItemPositions = {
 const SHOPKEEPER_LINES = {
   "ice-room": {
     default: "少冰？少熬夜才是真的。",
-    hover: "冰室猫眯起眼：苦的、甜的、醒的，都在这排架子上。",
+    hover: "苦的、甜的、醒的，都在这排架子上。",
     click: [
       "别盯着奶茶桶发呆，先选食材。",
       "凌晨的冰室不收眼泪，只收配方。",
@@ -215,7 +262,7 @@ const SHOPKEEPER_LINES = {
   },
   "street-stall": {
     default: "别站着发呆，鱼蛋不会自己跳进碗里。",
-    hover: "大排档猫甩了甩毛巾：想转运，就别怕烟火气。",
+    hover: "想转运，就别怕烟火气。",
     click: [
       "手快点，后面还有猫排队。",
       "咖喱酱很辣，但有些心事更辣。",
@@ -224,7 +271,7 @@ const SHOPKEEPER_LINES = {
   },
   "dessert-station": {
     default: "甜的不能治百病，但能让你先坐一会儿。",
-    hover: "甜品站猫轻轻眨眼：软糯的东西，最适合接住深夜。",
+    hover: "软糯的东西，最适合接住深夜。",
     click: [
       "别急，糖水要慢慢等。",
       "如果今晚睡不着，就先吃点温柔的。",
@@ -235,6 +282,7 @@ const SHOPKEEPER_LINES = {
 
 const els = {
   gameStage: document.getElementById("game-stage"),
+  header: document.getElementById("header"),
   initialLoader: document.getElementById("initial-loader"),
   initialLoaderText: document.getElementById("initial-loader-text"),
   initialLoaderBar: document.getElementById("initial-loader-bar"),
@@ -244,6 +292,11 @@ const els = {
   stagePreloadBar: document.getElementById("stage-preload-bar"),
   stagePreloadPercent: document.getElementById("stage-preload-percent"),
   openingScreen: document.getElementById("opening-screen"),
+  gameNav: document.getElementById("game-nav"),
+  globalHomeBtn: document.getElementById("global-home-btn"),
+  globalHomeIcon: document.getElementById("global-home-icon"),
+  globalReturnBtn: document.getElementById("global-return-btn"),
+  globalReturnIcon: document.getElementById("global-return-icon"),
   enterDoorBtn: document.getElementById("enter-door-btn"),
   openingStatus: document.getElementById("opening-status"),
   openingTransitionLayer: document.getElementById("opening-transition-layer"),
@@ -266,6 +319,8 @@ const els = {
   level1InfoBar: document.getElementById("level1-info-bar"),
   level1HomeBtn: document.getElementById("level1-home-btn"),
   level1HomeIcon: document.getElementById("level1-home-icon"),
+  level1ReturnBtn: document.getElementById("level1-return-btn"),
+  level1ReturnIcon: document.getElementById("level1-return-icon"),
   level1LogoIcon: document.getElementById("level1-logo-icon"),
   tasteDescriptionScreen: document.getElementById("taste-description-screen"),
   tasteCatLine: document.getElementById("taste-cat-line"),
@@ -376,6 +431,15 @@ function getAssetPath0427(key) {
 
 function getLoadedAssetPath(assetKey) {
   return assetLoadState.loadedKeys.has(assetKey) ? getAssetPath0427(assetKey) : "";
+}
+
+function getIngredientImageKey(ingredientName) {
+  return INGREDIENT_IMAGE_KEY_BY_NAME[String(ingredientName || "").trim()] || "";
+}
+
+function getIngredientImagePath(ingredientName) {
+  const assetKey = getIngredientImageKey(ingredientName);
+  return assetKey ? getLoadedAssetPath(assetKey) : "";
 }
 
 function toCssUrl(path) {
@@ -753,6 +817,15 @@ function getIngredientById(ingredientId) {
   return state.data.ingredients.find((ingredient) => ingredient.id === ingredientId);
 }
 
+function getIngredientImageKeyById(ingredientId) {
+  const ingredient = getIngredientById(ingredientId);
+  return ingredient ? getIngredientImageKey(ingredient.name) : "";
+}
+
+function getIngredientImageKeysForIds(ingredientIds) {
+  return uniqueIngredientIds(ingredientIds).map(getIngredientImageKeyById).filter(Boolean);
+}
+
 function getHintById(hintId) {
   return state.data.half_success_hints.find((hint) => hint.id === hintId);
 }
@@ -1078,10 +1151,37 @@ function trackNavigationForScreen(screen) {
   pushNavigationView(view.viewName, view.payload);
 }
 
+function updateGameNavigation(screen) {
+  const isCardFlowScreen = ["category_selection", "subcategory_selection", "issue_selection"].includes(screen);
+  const showNav = screen !== "opening" && screen !== "shop_entry" && !isCardFlowScreen;
+  const showReturn = showNav && screen !== "result";
+
+  els.gameNav.hidden = !showNav;
+  els.globalHomeBtn.hidden = !showNav;
+  els.globalReturnBtn.hidden = !showReturn;
+}
+
+function syncCollectionBookPlacement(isCardFlowScreen) {
+  if (!els.collectionBookButton || !els.level1InfoBar || !els.header) return;
+
+  if (isCardFlowScreen) {
+    if (els.collectionBookButton.parentElement !== els.level1InfoBar) {
+      els.level1InfoBar.appendChild(els.collectionBookButton);
+    }
+    return;
+  }
+
+  if (els.collectionBookButton.parentElement !== els.header) {
+    els.header.appendChild(els.collectionBookButton);
+  }
+}
+
 function setScreen(screen) {
   const selectionScreens = ["seed_selection", "category_selection", "subcategory_selection", "issue_selection"];
   const isCardFlowScreen = ["category_selection", "subcategory_selection", "issue_selection"].includes(screen);
   const isLevel1CardScreen = screen === "category_selection";
+  const isLevel2CardScreen = screen === "subcategory_selection";
+  const isLevel3CardScreen = screen === "issue_selection";
 
   trackNavigationForScreen(screen);
   state.screen = screen;
@@ -1094,8 +1194,14 @@ function setScreen(screen) {
   els.cardFlowPanel.hidden = !isCardFlowScreen;
   els.cardFlowPanel.classList.toggle("is-oracle-mode", isCardFlowScreen);
   els.cardFlowPanel.classList.toggle("is-level1-card-stage", isLevel1CardScreen);
-  els.level1InfoBar.hidden = !isLevel1CardScreen;
+  els.cardFlowPanel.classList.toggle("is-v4-oracle-bg", isLevel2CardScreen || isLevel3CardScreen);
+  els.cardFlowPanel.classList.toggle("is-level2-card-stage", isLevel2CardScreen);
+  els.cardFlowPanel.classList.toggle("is-level3-card-stage", isLevel3CardScreen);
+  els.gameStage.classList.toggle("is-card-flow-screen", isCardFlowScreen);
+  els.level1InfoBar.hidden = !isCardFlowScreen;
   els.overlay.style.display = screen === "result" ? "flex" : "none";
+  syncCollectionBookPlacement(isCardFlowScreen);
+  updateGameNavigation(screen);
 }
 
 function getShopEntryVariant(shopId) {
@@ -1143,6 +1249,63 @@ function hideShopEntryTransition(immediate = false) {
       els.shopEntryOverlay.hidden = true;
     }
   }, 180);
+}
+
+function clearShopStreetEntryFadeClasses() {
+  els.shopStreetScreen.classList.remove("is-shop-street-fading-out");
+  els.issuePlayScreen.classList.remove(
+    "is-shop-interior-fading-in",
+    "is-shop-interior-fade-visible",
+  );
+}
+
+function waitShopEntryStep(durationMs) {
+  const duration = Math.max(0, durationMs);
+  if (state.shopEntryTimer) {
+    window.clearTimeout(state.shopEntryTimer);
+    state.shopEntryTimer = null;
+  }
+  if (duration === 0) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    state.shopEntryTimer = window.setTimeout(() => {
+      state.shopEntryTimer = null;
+      resolve();
+    }, duration);
+  });
+}
+
+function preserveShopInteriorReturnPath(issueId) {
+  if (state.screen !== "shop_street") return;
+
+  state.navigation.currentView = {
+    viewName: "shop_entry",
+    payload: { issueId },
+  };
+}
+
+async function transitionFromShopStreetToInterior(issueId, enterInterior) {
+  clearShopStreetEntryFadeClasses();
+
+  if (prefersReducedMotion() || state.screen !== "shop_street") {
+    preserveShopInteriorReturnPath(issueId);
+    enterInterior();
+    return;
+  }
+
+  els.shopStreetScreen.classList.add("is-shop-street-fading-out");
+  await waitShopEntryStep(SHOP_STREET_FADE_OUT_MS);
+
+  els.issuePlayScreen.classList.add("is-shop-interior-fading-in");
+  preserveShopInteriorReturnPath(issueId);
+  enterInterior();
+
+  window.requestAnimationFrame(() => {
+    els.issuePlayScreen.classList.add("is-shop-interior-fade-visible");
+  });
+
+  await waitShopEntryStep(SHOP_INTERIOR_FADE_IN_MS);
+  clearShopStreetEntryFadeClasses();
 }
 
 function getFailurePenaltyOptions() {
@@ -1389,19 +1552,40 @@ function clearCardFlowGrid() {
   els.cardFlowGrid.classList.remove("is-level1-image-grid");
 }
 
-function applyLevel1InfoBarAssets() {
+function applyNavigationIconAssets() {
   const homePath = getLoadedAssetPath("ui.home");
-  const logoPath = getLoadedAssetPath("ui.logo");
+  const returnPath = getLoadedAssetPath("ui.return");
 
   if (homePath) {
+    els.globalHomeIcon.src = homePath;
     els.level1HomeIcon.src = homePath;
   }
+  els.globalHomeIcon.hidden = !homePath;
   els.level1HomeIcon.hidden = !homePath;
+
+  if (returnPath) {
+    els.globalReturnIcon.src = returnPath;
+    els.level1ReturnIcon.src = returnPath;
+  }
+  els.globalReturnIcon.hidden = !returnPath;
+  els.level1ReturnIcon.hidden = !returnPath;
+}
+
+function applyLevel1InfoBarAssets() {
+  const logoPath = getLoadedAssetPath("ui.logo");
+  applyNavigationIconAssets();
 
   if (logoPath) {
     els.level1LogoIcon.src = logoPath;
   }
   els.level1LogoIcon.hidden = !logoPath;
+}
+
+function applyCardFlowOracleBackgroundAsset() {
+  const wizardBackgroundPath = getLoadedAssetPath("opening.barWizardBackground");
+  if (wizardBackgroundPath) {
+    document.documentElement.style.setProperty("--cat-speech-bg", toCssUrl(wizardBackgroundPath));
+  }
 }
 
 function prefersReducedMotion() {
@@ -1437,8 +1621,38 @@ function getIssueFlowContext(issueId) {
   return { issue, seedIssue, shop };
 }
 
-function getIssueRiddleText(issue, seedIssue) {
-  return issue?.riddle_text || seedIssue?.riddle_text || "猫大师今天只眯着眼，不肯把谜面说完整。";
+function firstNonEmptyText(...values) {
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (text) return text;
+  }
+
+  return "";
+}
+
+function getCardFlowItemByIssueId(issueId) {
+  if (!issueId) return null;
+  return getPublicCardFlowItems().find((item) => item.issue_id === issueId) || null;
+}
+
+function getIssuePromptText(issue, seedIssue) {
+  const issueId = issue?.id || seedIssue?.issue_id || seedIssue?.id || "";
+  const cardFlowItem = getCardFlowItemByIssueId(issueId);
+
+  return firstNonEmptyText(
+    issue?.taste_description,
+    issue?.riddle,
+    issue?.riddle_text,
+    seedIssue?.taste_description,
+    seedIssue?.riddle,
+    seedIssue?.riddle_text,
+    seedIssue?.display_title,
+    cardFlowItem?.display_title,
+  ) || ISSUE_PROMPT_EMPTY_TEXT;
+}
+
+function applyLongTextClass(element, text, threshold = 42) {
+  element.classList.toggle("is-long-text", String(text || "").trim().length > threshold);
 }
 
 function applyTasteDescriptionAssets() {
@@ -1513,9 +1727,11 @@ async function showTasteDescriptionScene(issueId) {
   state.pendingTasteIssueId = issueId;
   state.pendingShopStreetIssueId = null;
   applyTasteDescriptionAssets();
+  const promptText = getIssuePromptText(issue, seedIssue);
   els.tasteCatLine.textContent = "Meow...this is a ‘味道题面’";
   els.tasteDescriptionTitle.textContent = getIssueDisplayTitle(issue);
-  els.tasteDescriptionText.textContent = getIssueRiddleText(issue, seedIssue);
+  els.tasteDescriptionText.textContent = promptText;
+  applyLongTextClass(els.tasteDescriptionText, promptText, 42);
   setScreen("taste_description");
   window.requestAnimationFrame(() => {
     els.tasteGetBtn.focus({ preventScroll: true });
@@ -1566,9 +1782,12 @@ async function showShopStreetScene(issueId) {
   state.pendingTasteIssueId = null;
   state.pendingShopStreetIssueId = issueId;
   applyShopStreetAssets();
+  clearShopStreetEntryFadeClasses();
   resetShopStreetBuildings(shop.id);
+  const promptText = getIssuePromptText(issue, seedIssue);
   els.shopStreetTitle.textContent = getIssueDisplayTitle(issue);
-  els.shopStreetSubtitle.textContent = `沿着「${getIssueRiddleText(issue, seedIssue)}」找到对应的深夜小店。`;
+  els.shopStreetSubtitle.textContent = `沿着「${promptText}」找到对应的深夜小店。`;
+  applyLongTextClass(els.shopStreetSubtitle, promptText, 30);
   els.shopStreetHint.textContent = "";
   setScreen("shop_street");
   window.requestAnimationFrame(() => {
@@ -1641,6 +1860,7 @@ function clearTransientOverlays() {
   els.tasteTransitionOverlay.classList.remove("is-visible");
   els.tasteTransitionOverlay.hidden = true;
   els.shopStreetHint.textContent = "";
+  clearShopStreetEntryFadeClasses();
 
   hideShopEntryTransition(true);
   hidePenaltyOverlay();
@@ -1953,7 +2173,7 @@ function getCardFlowSubcategory(categoryId, subcategoryId) {
 }
 
 function getCardFlowTitleByIssueId(issueId) {
-  return getPublicCardFlowItems().find((item) => item.issue_id === issueId)?.display_title || "";
+  return getCardFlowItemByIssueId(issueId)?.display_title || "";
 }
 
 function renderCategorySelection() {
@@ -2014,6 +2234,7 @@ function renderSubcategorySelection(categoryId) {
 
   state.cardFlow.selectedCategory = categoryId;
   state.cardFlow.selectedSubcategory = "";
+  applyCardFlowOracleBackgroundAsset();
   setScreen("subcategory_selection");
   els.cardFlowBackBtn.textContent = "返回分类";
   els.cardFlowTitle.textContent = category.title;
@@ -2060,6 +2281,7 @@ function renderIssueSelection(categoryId, subcategoryId) {
 
   state.cardFlow.selectedCategory = categoryId;
   state.cardFlow.selectedSubcategory = subcategoryId;
+  applyCardFlowOracleBackgroundAsset();
   setScreen("issue_selection");
   els.cardFlowBackBtn.textContent = "返回方向";
   els.cardFlowTitle.textContent = direction.title;
@@ -2095,6 +2317,16 @@ async function handleCardFlowBack() {
 function handleLevel1HomeClick() {
   playSfx("click");
   goHomeToOpeningCover();
+}
+
+function handleGlobalHomeClick() {
+  playSfx("click");
+  goHomeToOpeningCover();
+}
+
+async function handleNavigationReturnClick() {
+  playSfx("click");
+  await goBackToPreviousView();
 }
 
 function resetOpeningCoverState() {
@@ -2389,6 +2621,7 @@ function showSeedSelection() {
   state.pendingShopStreetIssueId = null;
   els.tasteTransitionOverlay.classList.remove("is-visible");
   els.tasteTransitionOverlay.hidden = true;
+  clearShopStreetEntryFadeClasses();
   hideShopEntryTransition(true);
   hidePenaltyOverlay();
   state.currentIssueId = null;
@@ -2402,6 +2635,7 @@ function showSeedSelection() {
   els.issueTitle.textContent = "选一个你此刻的心结";
   els.issueShopAnchor.textContent = "店铺还没亮灯";
   els.riddleBox.textContent = "选一个你此刻的心结，猫大师才肯开口。";
+  els.riddleBox.classList.remove("is-long-text");
   els.feedback.textContent = "";
   els.shopTabs.innerHTML = "";
   els.ingredients.innerHTML = "";
@@ -2457,9 +2691,11 @@ async function returnToV4MoodCards() {
   els.tasteTransitionOverlay.classList.remove("is-visible");
   els.tasteTransitionOverlay.hidden = true;
   els.shopStreetHint.textContent = "";
+  clearShopStreetEntryFadeClasses();
   els.issueTitle.textContent = "选一个你此刻的心结";
   els.issueShopAnchor.textContent = "店铺还没亮灯";
   els.riddleBox.textContent = "选一个你此刻的心结，猫大师才肯开口。";
+  els.riddleBox.classList.remove("is-long-text");
   els.feedback.textContent = "";
   els.shopTabs.innerHTML = "";
   els.ingredients.innerHTML = "";
@@ -2619,16 +2855,59 @@ function setShopkeeperLine(shopkeeper, lineEl, text) {
   updateShopkeeperDialogForSelection(shopkeeper, lineEl);
 }
 
+function createSelectedIngredientFallback(name) {
+  const fallback = document.createElement("span");
+  fallback.className = "selected-ingredient-fallback";
+  fallback.textContent = name;
+  return fallback;
+}
+
+function createSelectedIngredientChip(ingredientId) {
+  const ingredient = getIngredientById(ingredientId);
+  const name = ingredient?.name || "神秘食材";
+  const chip = document.createElement("span");
+  chip.className = "selected-ingredient-chip";
+
+  const imagePath = getIngredientImagePath(name);
+  if (!imagePath) {
+    chip.classList.add("has-fallback");
+    chip.appendChild(createSelectedIngredientFallback(name));
+    return chip;
+  }
+
+  const image = document.createElement("img");
+  image.className = "selected-ingredient-icon";
+  image.src = imagePath;
+  image.alt = name;
+  image.decoding = "async";
+  image.onerror = () => {
+    chip.classList.add("has-fallback");
+    chip.replaceChildren(createSelectedIngredientFallback(name));
+  };
+  chip.appendChild(image);
+  return chip;
+}
+
 function updateShopkeeperDialogForSelection(
   shopkeeper = els.shopTabs.querySelector(".shopkeeper-placeholder"),
   lineEl = els.shopTabs.querySelector(".shopkeeper-line"),
 ) {
   if (!shopkeeper || !lineEl) return;
 
-  const selectedIngredientNames = filledSlotIds().map((ingredientId) => getIngredientDisplayName(ingredientId));
-  if (selectedIngredientNames.length) {
+  const selectedIngredientIds = filledSlotIds();
+  if (selectedIngredientIds.length) {
+    const label = document.createElement("span");
+    label.className = "selected-ingredient-label";
+    label.textContent = "已选：";
+
+    const icons = document.createElement("span");
+    icons.className = "selected-ingredient-icons";
+    selectedIngredientIds.forEach((ingredientId) => {
+      icons.appendChild(createSelectedIngredientChip(ingredientId));
+    });
+
     shopkeeper.classList.add("has-selected-ingredients");
-    lineEl.textContent = `已选：${selectedIngredientNames.join("、")}`;
+    lineEl.replaceChildren(label, icons);
     return;
   }
 
@@ -2774,13 +3053,38 @@ function renderIngredients() {
     button.type = "button";
     button.setAttribute("aria-label", ingredient.description ? `选择${ingredient.name}：${ingredient.description}` : `选择${ingredient.name}`);
     button.title = ingredient.description || ingredient.name;
+
+    const defaultState = document.createElement("span");
+    defaultState.className = "ingredient-default";
+    const imagePath = getIngredientImagePath(ingredient.name);
+    if (imagePath) {
+      const visual = document.createElement("span");
+      visual.className = "ingredient-visual";
+      const icon = document.createElement("img");
+      icon.className = "ingredient-icon";
+      icon.src = imagePath;
+      icon.alt = "";
+      icon.loading = "eager";
+      icon.decoding = "async";
+      icon.onerror = () => {
+        button.classList.add("has-image-error");
+        visual.hidden = true;
+        icon.removeAttribute("src");
+      };
+      visual.appendChild(icon);
+      defaultState.appendChild(visual);
+    } else {
+      button.classList.add("has-no-image");
+    }
+
     const name = document.createElement("span");
     name.className = "ingredient-name";
     name.textContent = ingredient.name;
+    defaultState.appendChild(name);
     const desc = document.createElement("span");
     desc.className = "ingredient-desc";
     desc.textContent = ingredient.description;
-    button.append(name, desc);
+    button.append(defaultState, desc);
     if (selectedCount) {
       const count = document.createElement("span");
       count.className = "ingredient-count";
@@ -2797,11 +3101,12 @@ function renderIngredients() {
 
 function enterIssuePlay(issue, seedIssue, shop) {
   setScreen("issue_play");
-  const riddle = getIssueRiddleText(issue, seedIssue);
+  const promptText = getIssuePromptText(issue, seedIssue);
   const shopName = shop?.name || seedIssue?.shop_name || issue.shop_name || "深夜小店";
   els.issueTitle.textContent = seedIssue?.title || getIssueDisplayTitle(issue);
   els.issueShopAnchor.textContent = `前往 ${shopName}，选择两味食材献祭。`;
-  els.riddleBox.textContent = riddle;
+  els.riddleBox.textContent = promptText;
+  applyLongTextClass(els.riddleBox, promptText, 34);
   els.feedback.textContent = "";
 
   applyIssuePlayAssets(shop?.id || seedIssue?.shop_id || issue.shop_id || "");
@@ -2818,7 +3123,13 @@ async function startGame(issueId) {
 
   state.isShopEntering = true;
   const shopId = shop?.id || seedIssue?.shop_id || issue.shop_id || "";
-  await ensureAssetsReady(getAssetGroupKeys("shopInteriorCommon", getShopInteriorAssetGroupName(shopId)), {
+  const recipeIngredientIds = issue.recipe_ingredient_ids || seedIssue?.recipe_ingredient_ids || [];
+  const visibleIngredientIds = getPlayableShopIngredientIds(shopId, recipeIngredientIds, issue);
+  const visibleFoodImageKeys = getIngredientImageKeysForIds(visibleIngredientIds);
+  await ensureAssetsReady([
+    ...getAssetGroupKeys("shopInteriorCommon", getShopInteriorAssetGroupName(shopId)),
+    ...visibleFoodImageKeys,
+  ], {
     message: "猫猫正在摆好柜台……",
     timeoutMs: STAGE_PRELOAD_TIMEOUT_MS,
   });
@@ -2831,16 +3142,16 @@ async function startGame(issueId) {
   state.isJudging = false;
   hideJudgementOverlay(true);
 
-  setScreen("shop_entry");
-  showShopEntryTransition(shop);
-
-  const transitionMs = prefersReducedMotion() ? 800 : 960;
-  state.shopEntryTimer = window.setTimeout(() => {
-    state.shopEntryTimer = null;
+  try {
+    await transitionFromShopStreetToInterior(issueId, () => {
+      enterIssuePlay(issue, seedIssue, shop);
+    });
+  } finally {
     state.isShopEntering = false;
-    hideShopEntryTransition();
-    enterIssuePlay(issue, seedIssue, shop);
-  }, transitionMs);
+    state.shopEntryTimer = null;
+    hideShopEntryTransition(true);
+    clearShopStreetEntryFadeClasses();
+  }
 }
 
 function selectIngredient(ingredientId) {
@@ -2934,14 +3245,48 @@ function getIngredientDisplayName(ingredientId) {
   return getIngredientById(ingredientId)?.name || "神秘食材";
 }
 
-function setJudgementIngredientNames(selectedIngredientIds) {
+function createFusionIngredientName(name) {
+  const fallback = document.createElement("span");
+  fallback.className = "fusion-ingredient-name";
+  fallback.textContent = name;
+  return fallback;
+}
+
+function createFusionIngredientVisual(ingredientId) {
+  const name = getIngredientDisplayName(ingredientId);
+  const wrapper = document.createElement("span");
+  wrapper.className = "fusion-ingredient";
+
+  const imagePath = getIngredientImagePath(name);
+  if (!imagePath) {
+    wrapper.classList.add("has-fallback");
+    wrapper.appendChild(createFusionIngredientName(name));
+    return wrapper;
+  }
+
+  wrapper.classList.add("has-image");
+  const image = document.createElement("img");
+  image.className = "fusion-ingredient-icon judgement-ingredient-icon";
+  image.src = imagePath;
+  image.alt = name;
+  image.decoding = "async";
+  image.onerror = () => {
+    wrapper.classList.remove("has-image");
+    wrapper.classList.add("has-fallback");
+    wrapper.replaceChildren(createFusionIngredientName(name));
+  };
+  wrapper.appendChild(image);
+  return wrapper;
+}
+
+function setJudgementIngredientVisuals(selectedIngredientIds) {
   const [leftIngredientId, rightIngredientId] = selectedIngredientIds || [];
-  els.judgementIngredientLeft.textContent = getIngredientDisplayName(leftIngredientId);
-  els.judgementIngredientRight.textContent = getIngredientDisplayName(rightIngredientId);
+  els.judgementIngredientLeft.replaceChildren(createFusionIngredientVisual(leftIngredientId));
+  els.judgementIngredientRight.replaceChildren(createFusionIngredientVisual(rightIngredientId));
 }
 
 function showJudgementOverlay(selectedIngredientIds) {
-  setJudgementIngredientNames(selectedIngredientIds);
+  setJudgementIngredientVisuals(selectedIngredientIds);
   els.sacrificeCounter.classList.add("is-judging");
   els.judgementOverlay.hidden = false;
   window.requestAnimationFrame(() => {
@@ -3038,6 +3383,7 @@ function showResult(result) {
 
   state.activeResultType = result.type;
   state.screen = "result";
+  updateGameNavigation("result");
   els.overlay.className = `result-overlay ${result.type}`;
   els.resultCard.className = `result-card ${result.type}`;
   applyResultDialogAsset();
@@ -3058,6 +3404,7 @@ function closeRetryResult() {
   els.overlay.classList.remove("is-collecting-wisdom", "has-result-cat-image");
   state.activeResultType = null;
   state.screen = "issue_play";
+  updateGameNavigation("issue_play");
   resetSelection("已清空托盘，可以重新选择两味食材。");
 }
 
@@ -3170,6 +3517,7 @@ async function init() {
     });
     state.collection = loadCollection();
     renderIssueButtons();
+    applyNavigationIconAssets();
     updateCollectionButton();
     updateSacrificeSlots();
     els.enterDoorBtn.disabled = false;
@@ -3179,6 +3527,9 @@ async function init() {
     els.expandedCardFlowBtn.addEventListener("click", showCategorySelection);
     els.cardFlowBackBtn.addEventListener("click", handleCardFlowBack);
     els.level1HomeBtn.addEventListener("click", handleLevel1HomeClick);
+    els.level1ReturnBtn.addEventListener("click", handleNavigationReturnClick);
+    els.globalHomeBtn.addEventListener("click", handleGlobalHomeClick);
+    els.globalReturnBtn.addEventListener("click", handleNavigationReturnClick);
     els.tasteGetBtn.addEventListener("click", handleTasteGetClick);
     els.tasteReturnBtn.addEventListener("click", handleTasteReturnClick);
     els.shopStreetBuildings.addEventListener("click", handleShopStreetClick);
@@ -3214,6 +3565,7 @@ async function init() {
     els.enterDoorBtn.disabled = true;
     els.openingStatus.textContent = "猫大师今天打烊了，CSV 编译数据没加载出来。";
     els.riddleBox.textContent = "猫大师今天打烊了，CSV 编译数据没加载出来。请先运行 node scripts/compile-csv-to-runtime.js。";
+    applyLongTextClass(els.riddleBox, els.riddleBox.textContent, 34);
     hideInitialLoader();
   }
 }
