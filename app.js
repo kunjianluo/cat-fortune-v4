@@ -17,6 +17,9 @@ const state = {
   catHairTimer: null,
   openingTransitionTimer: null,
   catMasterEntranceTimer: null,
+  tasteTransitionTimer: null,
+  pendingTasteIssueId: null,
+  pendingShopStreetIssueId: null,
   nextStageAssetsPromise: null,
   nextStageAssetsReady: false,
   nextStageAssetsDone: 0,
@@ -74,6 +77,9 @@ const NEXT_STAGE_ASSET_KEYS = [
   "opening.barWizardBackground",
   "opening.catTransformationGif",
   "catMaster.wizard",
+  "catMaster.halfSuccess",
+  "catMaster.fail",
+  "catMaster.success",
   "card.career",
   "card.society",
   "card.emotion",
@@ -83,7 +89,50 @@ const NEXT_STAGE_ASSET_KEYS = [
   "ui.logo",
   "ui.dialogBox",
   "ui.optionFrame",
+  "shopInterior.dessertStation",
+  "shopInterior.iceRoom",
+  "shopInterior.streetStall",
+  "shopkeeper.dessertStation",
+  "shopkeeper.iceRoom",
+  "shopkeeper.streetStall",
+  "punishment.claw",
+  "punishment.feather",
+  "ui.ring",
 ];
+const TASTE_TO_STREET_TRANSITION_MS = 680;
+const WRONG_SHOP_HINT_TEXT = "猫大师摇头：这道味道不在这里。";
+const shopStreetAssetKeys = {
+  background: "shopStreet.background",
+  "dessert-station": "shopBuilding.dessertStation",
+  "ice-room": "shopBuilding.iceRoom",
+  "street-stall": "shopBuilding.streetStall",
+};
+const shopPlayAssetKeys = {
+  "dessert-station": {
+    interior: "shopInterior.dessertStation",
+    shopkeeper: "shopkeeper.dessertStation",
+  },
+  "ice-room": {
+    interior: "shopInterior.iceRoom",
+    shopkeeper: "shopkeeper.iceRoom",
+  },
+  "street-stall": {
+    interior: "shopInterior.streetStall",
+    shopkeeper: "shopkeeper.streetStall",
+  },
+};
+
+const resultCatAssetKeys = {
+  success: "catMaster.success",
+  half_success: "catMaster.halfSuccess",
+  failure_slip: "catMaster.fail",
+  success_wisdom: "catMaster.wizard",
+};
+
+const penaltyAssetKeys = {
+  "mud-paw": "punishment.claw",
+  "cat-hair": "punishment.feather",
+};
 
 const FAILURE_PENALTY_FALLBACKS = [
   { id: "nonsense-slip", weight_percent: 50 },
@@ -93,19 +142,18 @@ const FAILURE_PENALTY_FALLBACKS = [
 
 const penaltyItemPositions = {
   "mud-paw": [
-    { left: "18%", top: "28%", rotate: "-18deg", scale: "1" },
-    { left: "64%", top: "24%", rotate: "14deg", scale: "0.92" },
-    { left: "34%", top: "58%", rotate: "8deg", scale: "1.08" },
-    { left: "76%", top: "62%", rotate: "-10deg", scale: "0.98" },
+    { left: "18%", top: "28%", rotate: "-18deg", scale: "1.04" },
+    { left: "78%", top: "24%", rotate: "15deg", scale: "0.95" },
+    { left: "24%", top: "72%", rotate: "9deg", scale: "0.92" },
+    { left: "80%", top: "72%", rotate: "-12deg", scale: "1.08" },
+    { left: "54%", top: "58%", rotate: "-4deg", scale: "0.86" },
   ],
   "cat-hair": [
-    { left: "14%", top: "22%", rotate: "-24deg", scale: "1" },
-    { left: "38%", top: "18%", rotate: "18deg", scale: "0.9" },
-    { left: "68%", top: "24%", rotate: "-8deg", scale: "1.08" },
-    { left: "82%", top: "48%", rotate: "28deg", scale: "0.96" },
-    { left: "22%", top: "56%", rotate: "12deg", scale: "1.1" },
-    { left: "48%", top: "68%", rotate: "-16deg", scale: "0.94" },
-    { left: "72%", top: "74%", rotate: "8deg", scale: "1" },
+    { left: "16%", top: "24%", rotate: "-24deg", scale: "1" },
+    { left: "43%", top: "20%", rotate: "18deg", scale: "0.88" },
+    { left: "76%", top: "30%", rotate: "-8deg", scale: "1.08" },
+    { left: "24%", top: "70%", rotate: "12deg", scale: "1.05" },
+    { left: "70%", top: "72%", rotate: "-16deg", scale: "0.94" },
   ],
 };
 
@@ -140,6 +188,7 @@ const SHOPKEEPER_LINES = {
 };
 
 const els = {
+  gameStage: document.getElementById("game-stage"),
   initialLoader: document.getElementById("initial-loader"),
   initialLoaderBar: document.getElementById("initial-loader-bar"),
   stagePreloadOverlay: document.getElementById("stage-preload-overlay"),
@@ -169,6 +218,19 @@ const els = {
   level1HomeBtn: document.getElementById("level1-home-btn"),
   level1HomeIcon: document.getElementById("level1-home-icon"),
   level1LogoIcon: document.getElementById("level1-logo-icon"),
+  tasteDescriptionScreen: document.getElementById("taste-description-screen"),
+  tasteCatLine: document.getElementById("taste-cat-line"),
+  tasteDescriptionTitle: document.getElementById("taste-description-title"),
+  tasteDescriptionText: document.getElementById("taste-description-text"),
+  tasteGetBtn: document.getElementById("taste-get-btn"),
+  tasteTransitionOverlay: document.getElementById("taste-transition-overlay"),
+  shopStreetScreen: document.getElementById("shop-street-screen"),
+  shopStreetTitle: document.getElementById("shop-street-title"),
+  shopStreetSubtitle: document.getElementById("shop-street-subtitle"),
+  shopStreetBuildings: document.getElementById("shop-street-buildings"),
+  shopStreetHint: document.getElementById("shop-street-hint"),
+  shopStreetReturnBtn: document.getElementById("shop-street-return-btn"),
+  shopStreetReturnIcon: document.getElementById("shop-street-return-icon"),
   issuePlayScreen: document.getElementById("issue-play-screen"),
   issueTitle: document.getElementById("issue-play-title"),
   issueShopAnchor: document.getElementById("issue-shop-anchor"),
@@ -183,6 +245,7 @@ const els = {
     document.getElementById("sacrifice-slot-1"),
   ],
   submitBtn: document.getElementById("submit-btn"),
+  submitRingIcon: document.getElementById("submit-ring-icon"),
   feedback: document.getElementById("feedback"),
   shopEntryOverlay: document.getElementById("shop-entry-overlay"),
   shopEntrySign: document.getElementById("shop-entry-sign"),
@@ -193,6 +256,8 @@ const els = {
   judgementIngredientRight: document.getElementById("judgement-ingredient-right"),
   overlay: document.getElementById("overlay"),
   resultCard: document.getElementById("result-card"),
+  resultCatImage: document.getElementById("result-cat-image"),
+  resultCatFallback: document.getElementById("result-cat-fallback"),
   resultEyebrow: document.getElementById("result-eyebrow"),
   foodResult: document.getElementById("food-result"),
   foodName: document.getElementById("food-name"),
@@ -260,6 +325,64 @@ function getAssetPath0427(key) {
 
 function toCssUrl(path) {
   return `url("${path.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
+}
+
+function setOptionalImage(image, path, onLoad, onError) {
+  if (!image) return;
+  image.onload = null;
+  image.onerror = null;
+
+  if (!path) {
+    image.hidden = true;
+    image.removeAttribute("src");
+    if (onError) onError();
+    return;
+  }
+
+  image.hidden = true;
+  image.removeAttribute("src");
+  image.onload = () => {
+    image.hidden = false;
+    if (onLoad) onLoad();
+  };
+  image.onerror = () => {
+    image.hidden = true;
+    image.removeAttribute("src");
+    if (onError) onError();
+  };
+  image.src = path;
+  if (image.complete && image.naturalWidth > 0) {
+    image.onload();
+  }
+}
+
+function applyResultDialogAsset() {
+  const dialogBoxPath = getAssetPath0427("ui.dialogBox");
+  els.overlay.classList.toggle("has-result-dialog-box", Boolean(dialogBoxPath));
+  if (dialogBoxPath) {
+    els.overlay.style.setProperty("--result-dialog-box-img", toCssUrl(dialogBoxPath));
+  } else {
+    els.overlay.style.removeProperty("--result-dialog-box-img");
+  }
+}
+
+function setResultCatAsset(assetKey, fallbackText = "🐱") {
+  const path = getAssetPath0427(assetKey);
+  els.resultCatFallback.textContent = fallbackText;
+  els.resultCatFallback.hidden = false;
+  els.overlay.classList.remove("has-result-cat-image");
+  setOptionalImage(
+    els.resultCatImage,
+    path,
+    () => {
+      els.overlay.classList.add("has-result-cat-image");
+      els.resultCatFallback.hidden = true;
+    },
+    () => {
+      els.overlay.classList.remove("has-result-cat-image");
+      els.resultCatFallback.hidden = false;
+    },
+  );
 }
 
 function setProgressBar(bar, done, total) {
@@ -738,6 +861,8 @@ function setScreen(screen) {
   state.screen = screen;
   els.openingScreen.hidden = screen !== "opening";
   els.catIntroScreen.hidden = screen !== "cat_intro";
+  els.tasteDescriptionScreen.hidden = screen !== "taste_description";
+  els.shopStreetScreen.hidden = screen !== "shop_street";
   els.startScreen.style.display = selectionScreens.includes(screen) ? "flex" : "none";
   els.seedSelectionPanel.hidden = screen !== "seed_selection";
   els.cardFlowPanel.hidden = !isCardFlowScreen;
@@ -876,7 +1001,26 @@ function createPenaltyItem(type, text, position, index) {
   const item = document.createElement("button");
   item.className = `penalty-item ${type === "mud-paw" ? "mud-paw-mark" : "cat-hair-strand"}`;
   item.type = "button";
-  item.textContent = text;
+  const fallback = document.createElement("span");
+  fallback.className = "penalty-item-fallback";
+  fallback.textContent = text;
+  item.appendChild(fallback);
+
+  const assetPath = getAssetPath0427(penaltyAssetKeys[type]);
+  if (assetPath) {
+    const image = document.createElement("img");
+    image.className = "penalty-item-image";
+    image.alt = "";
+    image.hidden = true;
+    item.appendChild(image);
+    setOptionalImage(
+      image,
+      assetPath,
+      () => item.classList.add("has-penalty-image"),
+      () => item.classList.remove("has-penalty-image"),
+    );
+  }
+
   item.style.left = position.left;
   item.style.top = position.top;
   item.style.setProperty("--penalty-rotate", position.rotate);
@@ -1053,6 +1197,190 @@ function resetCardFlowLightOrb() {
   els.cardFlowPanel.classList.remove("is-collapsing-card");
 }
 
+function clearTasteTransitionTimer() {
+  if (!state.tasteTransitionTimer) return;
+  window.clearTimeout(state.tasteTransitionTimer);
+  state.tasteTransitionTimer = null;
+}
+
+function getIssueFlowContext(issueId) {
+  const seedIssue = getSeedIssueById(issueId);
+  const issue = getIssueById(issueId);
+  const shop = issue ? getShopById(seedIssue?.shop_id || issue.shop_id) : null;
+  return { issue, seedIssue, shop };
+}
+
+function getIssueRiddleText(issue, seedIssue) {
+  return issue?.riddle_text || seedIssue?.riddle_text || "猫大师今天只眯着眼，不肯把谜面说完整。";
+}
+
+function applyTasteDescriptionAssets() {
+  const root = document.documentElement;
+  const wizardBackgroundPath = getAssetPath0427("opening.barWizardBackground");
+  const dialogBoxPath = getAssetPath0427("ui.dialogBox");
+
+  root.classList.toggle("has-taste-scene-bg", Boolean(wizardBackgroundPath));
+  root.classList.toggle("has-taste-dialog-box", Boolean(dialogBoxPath));
+
+  if (wizardBackgroundPath) {
+    root.style.setProperty("--taste-scene-bg", toCssUrl(wizardBackgroundPath));
+  }
+
+  if (dialogBoxPath) {
+    root.style.setProperty("--taste-dialog-box-img", toCssUrl(dialogBoxPath));
+  }
+}
+
+function applyShopStreetAssets() {
+  const root = document.documentElement;
+  const returnPath = getAssetPath0427("ui.return");
+  const streetPath = getAssetPath0427(shopStreetAssetKeys.background);
+  const dessertPath = getAssetPath0427(shopStreetAssetKeys["dessert-station"]);
+  const iceRoomPath = getAssetPath0427(shopStreetAssetKeys["ice-room"]);
+  const streetStallPath = getAssetPath0427(shopStreetAssetKeys["street-stall"]);
+
+  root.classList.toggle("has-shop-street-bg", Boolean(streetPath));
+  root.classList.toggle("has-shop-building-dessert", Boolean(dessertPath));
+  root.classList.toggle("has-shop-building-ice", Boolean(iceRoomPath));
+  root.classList.toggle("has-shop-building-stall", Boolean(streetStallPath));
+
+  if (streetPath) root.style.setProperty("--shop-street-bg", toCssUrl(streetPath));
+  if (dessertPath) root.style.setProperty("--shop-building-dessert-img", toCssUrl(dessertPath));
+  if (iceRoomPath) root.style.setProperty("--shop-building-ice-img", toCssUrl(iceRoomPath));
+  if (streetStallPath) root.style.setProperty("--shop-building-stall-img", toCssUrl(streetStallPath));
+
+  if (returnPath) {
+    els.shopStreetReturnIcon.src = returnPath;
+  }
+  els.shopStreetReturnIcon.hidden = !returnPath;
+  els.shopStreetReturnBtn.classList.toggle("has-return-icon", Boolean(returnPath));
+}
+
+function hasShopStreetAssetSet() {
+  return Boolean(
+    getAssetPath0427(shopStreetAssetKeys.background)
+    && getAssetPath0427(shopStreetAssetKeys["dessert-station"])
+    && getAssetPath0427(shopStreetAssetKeys["ice-room"])
+    && getAssetPath0427(shopStreetAssetKeys["street-stall"]),
+  );
+}
+
+function showTasteDescriptionScene(issueId) {
+  const { issue, seedIssue } = getIssueFlowContext(issueId);
+  if (!issue) {
+    startGame(issueId);
+    return;
+  }
+
+  state.pendingTasteIssueId = issueId;
+  state.pendingShopStreetIssueId = null;
+  applyTasteDescriptionAssets();
+  els.tasteCatLine.textContent = "Meow...this is a ‘味道题面’";
+  els.tasteDescriptionTitle.textContent = getIssueDisplayTitle(issue);
+  els.tasteDescriptionText.textContent = getIssueRiddleText(issue, seedIssue);
+  setScreen("taste_description");
+  window.requestAnimationFrame(() => {
+    els.tasteGetBtn.focus({ preventScroll: true });
+  });
+}
+
+function showTasteToStreetTransition(next) {
+  clearTasteTransitionTimer();
+  els.tasteTransitionOverlay.hidden = false;
+  window.requestAnimationFrame(() => {
+    els.tasteTransitionOverlay.classList.add("is-visible");
+  });
+
+  state.tasteTransitionTimer = window.setTimeout(() => {
+    state.tasteTransitionTimer = null;
+    next();
+    els.tasteTransitionOverlay.classList.remove("is-visible");
+    window.setTimeout(() => {
+      if (!els.tasteTransitionOverlay.classList.contains("is-visible")) {
+        els.tasteTransitionOverlay.hidden = true;
+      }
+    }, prefersReducedMotion() ? 0 : 180);
+  }, prefersReducedMotion() ? 500 : TASTE_TO_STREET_TRANSITION_MS);
+}
+
+function resetShopStreetBuildings(targetShopId) {
+  els.shopStreetBuildings.querySelectorAll(".shop-building-btn").forEach((button) => {
+    const isTarget = button.dataset.shopId === targetShopId;
+    button.classList.toggle("is-target-shop", isTarget);
+    button.setAttribute("aria-pressed", "false");
+    button.setAttribute("aria-label", isTarget
+      ? `${button.querySelector(".shop-building-label")?.textContent || "店铺"}，今晚的味道在这里`
+      : `${button.querySelector(".shop-building-label")?.textContent || "店铺"}`);
+  });
+}
+
+function showShopStreetScene(issueId) {
+  const { issue, seedIssue, shop } = getIssueFlowContext(issueId);
+  if (!issue || !shop || !hasShopStreetAssetSet()) {
+    startGame(issueId);
+    return;
+  }
+
+  state.pendingTasteIssueId = null;
+  state.pendingShopStreetIssueId = issueId;
+  applyShopStreetAssets();
+  resetShopStreetBuildings(shop.id);
+  els.shopStreetTitle.textContent = getIssueDisplayTitle(issue);
+  els.shopStreetSubtitle.textContent = `沿着「${getIssueRiddleText(issue, seedIssue)}」找到对应的深夜小店。`;
+  els.shopStreetHint.textContent = "";
+  setScreen("shop_street");
+  window.requestAnimationFrame(() => {
+    els.shopStreetBuildings.querySelector(".is-target-shop")?.focus({ preventScroll: true });
+  });
+}
+
+function handleTasteGetClick() {
+  const issueId = state.pendingTasteIssueId;
+  if (!issueId) return;
+  playSfx("click");
+  showTasteToStreetTransition(() => showShopStreetScene(issueId));
+}
+
+function handleShopStreetClick(event) {
+  const button = event.target.closest(".shop-building-btn");
+  if (!button || !els.shopStreetBuildings.contains(button)) return;
+
+  const issueId = state.pendingShopStreetIssueId;
+  if (!issueId) return;
+  const { shop } = getIssueFlowContext(issueId);
+  if (!shop) {
+    startGame(issueId);
+    return;
+  }
+
+  playSfx("click");
+  if (button.dataset.shopId !== shop.id) {
+    els.shopStreetHint.textContent = WRONG_SHOP_HINT_TEXT;
+    button.setAttribute("aria-pressed", "false");
+    return;
+  }
+
+  button.setAttribute("aria-pressed", "true");
+  state.pendingShopStreetIssueId = null;
+  startGame(issueId);
+}
+
+function returnFromShopStreetToCardFlow() {
+  playSfx("click");
+  state.pendingTasteIssueId = null;
+  state.pendingShopStreetIssueId = null;
+  clearTasteTransitionTimer();
+  els.tasteTransitionOverlay.classList.remove("is-visible");
+  els.tasteTransitionOverlay.hidden = true;
+
+  if (state.cardFlow.selectedCategory && state.cardFlow.selectedSubcategory) {
+    renderIssueSelection(state.cardFlow.selectedCategory, state.cardFlow.selectedSubcategory);
+    return;
+  }
+
+  renderCategorySelection();
+}
+
 function transitionCardFlow(renderNext) {
   if (prefersReducedMotion() || els.cardFlowPanel.hidden) {
     resetCardFlowLightOrb();
@@ -1105,14 +1433,14 @@ function selectIssueCard(card, issueId) {
   }
 
   if (prefersReducedMotion()) {
-    startGame(issueId);
+    showTasteDescriptionScene(issueId);
     return;
   }
 
   setLightOrbPosition(card);
   els.cardFlowPanel.classList.add("is-collapsing-card");
   els.cardFlowLightOrb.classList.add("is-visible");
-  window.setTimeout(() => startGame(issueId), cardFlowTiming.orbMs);
+  window.setTimeout(() => showTasteDescriptionScene(issueId), cardFlowTiming.orbMs);
 }
 
 function createCardFlowButton(className, titleText, subtitleText, onClick, options = {}) {
@@ -1417,12 +1745,12 @@ function handleCardFlowBack() {
     return;
   }
 
-  showSeedSelection();
+  returnToV4MoodCards();
 }
 
-function returnToOpeningFromLevel1() {
+function handleLevel1HomeClick() {
   playSfx("click");
-  window.location.reload();
+  returnToV4MoodCards();
 }
 
 function hideOpeningTransitionGif() {
@@ -1674,10 +2002,15 @@ function showSeedSelection() {
     window.clearTimeout(state.shopEntryTimer);
     state.shopEntryTimer = null;
   }
+  clearTasteTransitionTimer();
   clearCatHairTimer();
   state.isShopEntering = false;
   state.isPenaltyFinishing = false;
   state.activePenaltyType = null;
+  state.pendingTasteIssueId = null;
+  state.pendingShopStreetIssueId = null;
+  els.tasteTransitionOverlay.classList.remove("is-visible");
+  els.tasteTransitionOverlay.hidden = true;
   hideShopEntryTransition(true);
   hidePenaltyOverlay();
   state.currentIssueId = null;
@@ -1697,9 +2030,73 @@ function showSeedSelection() {
   delete els.shopUi.dataset.shopId;
   delete els.shopUi.dataset.shopAssetId;
   delete els.shopUi.dataset.shopkeeperAssetId;
+  resetIssuePlayAssets();
   updateSacrificeSlots();
   resetMoodCardSelection();
   setScreen("seed_selection");
+}
+
+function returnToV4MoodCards() {
+  const canRenderV4MoodCards = getCardFlowCategories().length > 0;
+
+  if (state.shopEntryTimer) {
+    window.clearTimeout(state.shopEntryTimer);
+    state.shopEntryTimer = null;
+  }
+
+  clearTasteTransitionTimer();
+  clearCatHairTimer();
+  state.isOpeningTransitioning = false;
+  state.isCatMasterEntranceActive = false;
+  state.isShopEntering = false;
+  state.isPenaltyFinishing = false;
+  state.activePenaltyType = null;
+  state.activeResultType = null;
+  state.isCollectingSuccess = false;
+  state.pendingTasteIssueId = null;
+  state.pendingShopStreetIssueId = null;
+  state.currentIssueId = null;
+  state.currentSeedIssueId = null;
+  state.selectedSlots = [null, null];
+  state.isJudging = false;
+  state.cardFlow.selectedCategory = "";
+  state.cardFlow.selectedSubcategory = "";
+
+  hideOpeningTransitionGif();
+  hideCatMasterEntranceLayer();
+  hideShopEntryTransition(true);
+  hidePenaltyOverlay();
+  hideJudgementOverlay(true);
+  resetCardFlowLightOrb();
+  resetMoodCardSelection();
+
+  els.overlay.style.display = "none";
+  els.overlay.classList.remove("is-collecting-wisdom", "has-result-cat-image");
+  els.resultActionBtn.disabled = false;
+  els.collectionFeedback.textContent = "";
+  els.collectionBookOverlay.classList.remove("is-visible");
+  els.collectionBookOverlay.hidden = true;
+  els.tasteTransitionOverlay.classList.remove("is-visible");
+  els.tasteTransitionOverlay.hidden = true;
+  els.shopStreetHint.textContent = "";
+  els.issueTitle.textContent = "选一个你此刻的心结";
+  els.issueShopAnchor.textContent = "店铺还没亮灯";
+  els.riddleBox.textContent = "选一个你此刻的心结，猫大师才肯开口。";
+  els.feedback.textContent = "";
+  els.shopTabs.innerHTML = "";
+  els.ingredients.innerHTML = "";
+  delete els.shopUi.dataset.shopId;
+  delete els.shopUi.dataset.shopAssetId;
+  delete els.shopUi.dataset.shopkeeperAssetId;
+  resetIssuePlayAssets();
+  updateSacrificeSlots();
+
+  if (!canRenderV4MoodCards) {
+    showSeedSelection();
+    return;
+  }
+
+  renderCategorySelection();
 }
 
 function getCurrentPlayContext() {
@@ -1723,21 +2120,71 @@ function uniqueIngredientIds(ingredientIds) {
 }
 
 function getShopSceneAssetId(shopId) {
-  const assetIds = {
-    "dessert-station": "shop-bg-dessert-night",
-    "ice-room": "shop-bg-tea-night",
-    "street-stall": "shop-bg-noodle-night",
-  };
-  return assetIds[shopId] || "";
+  return shopPlayAssetKeys[shopId]?.interior || "";
 }
 
 function getShopkeeperAssetId(shopId) {
-  const assetIds = {
-    "dessert-station": "shopkeeper-dessert-idle",
-    "ice-room": "shopkeeper-tea-idle",
-    "street-stall": "shopkeeper-noodle-idle",
+  return shopPlayAssetKeys[shopId]?.shopkeeper || "";
+}
+
+function resetIssuePlayAssets() {
+  els.gameStage.classList.remove("has-issue-shop-interior");
+  els.gameStage.style.removeProperty("--shop-interior-bg");
+  els.issuePlayScreen.classList.remove(
+    "has-shop-interior-bg",
+    "has-sacrifice-dialog-box",
+  );
+  els.issuePlayScreen.style.removeProperty("--shop-interior-bg");
+  els.issuePlayScreen.style.removeProperty("--sacrifice-dialog-box-img");
+  els.submitBtn.classList.remove("has-ring-icon");
+  els.submitRingIcon.hidden = true;
+  els.submitRingIcon.removeAttribute("src");
+}
+
+function applyIssuePlayAssets(shopId) {
+  const interiorPath = getAssetPath0427(getShopSceneAssetId(shopId));
+  const dialogBoxPath = getAssetPath0427("ui.dialogBox");
+  const ringPath = getAssetPath0427("ui.ring");
+
+  els.issuePlayScreen.classList.toggle("has-shop-interior-bg", Boolean(interiorPath));
+  els.issuePlayScreen.classList.toggle("has-sacrifice-dialog-box", Boolean(dialogBoxPath));
+
+  if (interiorPath) {
+    els.gameStage.classList.add("has-issue-shop-interior");
+    els.gameStage.style.setProperty("--shop-interior-bg", toCssUrl(interiorPath));
+    els.issuePlayScreen.style.setProperty("--shop-interior-bg", toCssUrl(interiorPath));
+  } else {
+    els.gameStage.classList.remove("has-issue-shop-interior");
+    els.gameStage.style.removeProperty("--shop-interior-bg");
+    els.issuePlayScreen.style.removeProperty("--shop-interior-bg");
+  }
+
+  if (dialogBoxPath) {
+    els.issuePlayScreen.style.setProperty("--sacrifice-dialog-box-img", toCssUrl(dialogBoxPath));
+  } else {
+    els.issuePlayScreen.style.removeProperty("--sacrifice-dialog-box-img");
+  }
+
+  els.submitBtn.classList.remove("has-ring-icon");
+  els.submitRingIcon.hidden = true;
+  els.submitRingIcon.onload = () => {
+    els.submitRingIcon.hidden = false;
+    els.submitBtn.classList.add("has-ring-icon");
   };
-  return assetIds[shopId] || "";
+  els.submitRingIcon.onerror = () => {
+    els.submitBtn.classList.remove("has-ring-icon");
+    els.submitRingIcon.hidden = true;
+    els.submitRingIcon.removeAttribute("src");
+  };
+
+  if (ringPath) {
+    els.submitRingIcon.src = ringPath;
+    if (els.submitRingIcon.complete && els.submitRingIcon.naturalWidth > 0) {
+      els.submitRingIcon.onload();
+    }
+  } else {
+    els.submitRingIcon.removeAttribute("src");
+  }
 }
 
 function getShopkeeperLines(shopId) {
@@ -1804,6 +2251,27 @@ function renderShopDisplay() {
   shopkeeper.tabIndex = 0;
   shopkeeper.setAttribute("role", "button");
   shopkeeper.setAttribute("aria-label", `与${shop.npc || "店员猫"}互动`);
+  const shopkeeperPath = getAssetPath0427(shopkeeperAssetId);
+  const shopkeeperImage = document.createElement("img");
+  shopkeeperImage.className = "shopkeeper-image";
+  shopkeeperImage.alt = "";
+  shopkeeperImage.hidden = true;
+  shopkeeperImage.setAttribute("aria-hidden", "true");
+  if (shopkeeperPath) {
+    shopkeeperImage.onload = () => {
+      shopkeeperImage.hidden = false;
+      shopkeeper.classList.add("has-shopkeeper-image");
+    };
+    shopkeeperImage.onerror = () => {
+      shopkeeperImage.hidden = true;
+      shopkeeper.classList.remove("has-shopkeeper-image");
+      shopkeeperImage.removeAttribute("src");
+    };
+    shopkeeperImage.src = shopkeeperPath;
+    if (shopkeeperImage.complete && shopkeeperImage.naturalWidth > 0) {
+      shopkeeperImage.onload();
+    }
+  }
   const shopkeeperCat = document.createElement("div");
   shopkeeperCat.className = "shopkeeper-cat";
   shopkeeperCat.setAttribute("aria-hidden", "true");
@@ -1850,7 +2318,7 @@ function renderShopDisplay() {
     speakNextLine();
   });
 
-  shopkeeper.append(shopkeeperCat, shopkeeperNote, shopkeeperLine);
+  shopkeeper.append(shopkeeperImage, shopkeeperCat, shopkeeperNote, shopkeeperLine);
 
   interior.append(copy, shopkeeper);
   card.append(signboard, interior);
@@ -1895,13 +2363,14 @@ function renderIngredients() {
 
 function enterIssuePlay(issue, seedIssue, shop) {
   setScreen("issue_play");
-  const riddle = issue.riddle_text || seedIssue?.riddle_text || "猫大师今天只眯着眼，不肯把谜面说完整。";
+  const riddle = getIssueRiddleText(issue, seedIssue);
   const shopName = shop?.name || seedIssue?.shop_name || issue.shop_name || "深夜小店";
   els.issueTitle.textContent = seedIssue?.title || getIssueDisplayTitle(issue);
   els.issueShopAnchor.textContent = `前往 ${shopName}，选择两味食材献祭。`;
   els.riddleBox.textContent = riddle;
   els.feedback.textContent = "";
 
+  applyIssuePlayAssets(shop?.id || seedIssue?.shop_id || issue.shop_id || "");
   renderShopDisplay();
   renderIngredients();
   updateSacrificeSlots();
@@ -1910,11 +2379,11 @@ function enterIssuePlay(issue, seedIssue, shop) {
 function startGame(issueId) {
   if (state.isShopEntering) return;
 
-  const seedIssue = getSeedIssueById(issueId);
-  const issue = getIssueById(issueId);
+  const { issue, seedIssue, shop } = getIssueFlowContext(issueId);
   if (!issue) return;
-  const shop = getShopById(seedIssue?.shop_id || issue.shop_id);
 
+  state.pendingTasteIssueId = null;
+  state.pendingShopStreetIssueId = null;
   state.currentIssueId = issueId;
   state.currentSeedIssueId = seedIssue?.issue_id || null;
   state.selectedSlots = [null, null];
@@ -2126,6 +2595,8 @@ function showResult(result) {
   state.screen = "result";
   els.overlay.className = `result-overlay ${result.type}`;
   els.resultCard.className = `result-card ${result.type}`;
+  applyResultDialogAsset();
+  setResultCatAsset(resultCatAssetKeys[result.type], result.type === "failure_slip" ? "📜" : result.icon);
   els.resultEyebrow.textContent = result.eyebrow;
   els.overlay.style.display = "flex";
   els.foodResult.textContent = result.icon;
@@ -2139,23 +2610,22 @@ function showResult(result) {
 
 function closeRetryResult() {
   els.overlay.style.display = "none";
+  els.overlay.classList.remove("is-collecting-wisdom", "has-result-cat-image");
   state.activeResultType = null;
   state.screen = "issue_play";
   resetSelection("已清空托盘，可以重新选择两味食材。");
 }
 
 function closeSuccessResult() {
-  els.overlay.style.display = "none";
-  els.resultActionBtn.disabled = false;
-  state.isCollectingSuccess = false;
-  state.activeResultType = null;
-  showSeedSelection();
+  returnToV4MoodCards();
 }
 
 async function collectSuccessAndClose() {
   if (state.isCollectingSuccess) return;
   state.isCollectingSuccess = true;
   els.resultActionBtn.disabled = true;
+  els.overlay.classList.add("is-collecting-wisdom");
+  setResultCatAsset(resultCatAssetKeys.success_wisdom, "🐱");
 
   try {
     const entry = buildCurrentCollectionEntry();
@@ -2253,7 +2723,10 @@ async function init() {
     els.catIntroScreen.addEventListener("click", continueIntro);
     els.expandedCardFlowBtn.addEventListener("click", showCategorySelection);
     els.cardFlowBackBtn.addEventListener("click", handleCardFlowBack);
-    els.level1HomeBtn.addEventListener("click", returnToOpeningFromLevel1);
+    els.level1HomeBtn.addEventListener("click", handleLevel1HomeClick);
+    els.tasteGetBtn.addEventListener("click", handleTasteGetClick);
+    els.shopStreetBuildings.addEventListener("click", handleShopStreetClick);
+    els.shopStreetReturnBtn.addEventListener("click", returnFromShopStreetToCardFlow);
     els.collectionBookButton.addEventListener("click", openCollectionBook);
     els.collectionBookClose.addEventListener("click", closeCollectionBook);
     els.collectionBookOverlay.addEventListener("click", (event) => {

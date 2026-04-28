@@ -143,12 +143,62 @@
                 <span class="slot-value">等待食材</span>
               </button>
             </div>
-            <button class="issue-btn submit-btn" id="submit-btn" type="button" aria-disabled="true">按铃：选好了</button>
+            <button class="issue-btn submit-btn" id="submit-btn" type="button" aria-disabled="true">
+              <span class="submit-ring-visual" aria-hidden="true">
+                <img id="submit-ring-icon" class="submit-ring-icon" alt="" hidden />
+              </span>
+              <span class="submit-label">按铃：选好了</span>
+            </button>
             <div id="feedback" class="feedback" aria-live="polite"></div>
           </div>
         </div>
       </section>
     </div>
+
+    <section id="taste-description-screen" class="taste-description-screen" aria-labelledby="taste-description-title" hidden>
+      <div class="taste-scene">
+        <div class="taste-dialog-box">
+          <p id="taste-cat-line" class="taste-cat-line">Meow...this is a ‘味道题面’</p>
+          <h3 id="taste-description-title" class="taste-description-title">今晚的味道</h3>
+          <p id="taste-description-text" class="taste-description-text"></p>
+          <button id="taste-get-btn" class="taste-get-btn" type="button">Get!</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="shop-street-screen" class="shop-street-screen" aria-labelledby="shop-street-title" hidden>
+      <div class="shop-street-stage">
+        <button id="shop-street-return-btn" class="shop-street-return-btn" type="button" aria-label="返回心绪卡">
+          <img id="shop-street-return-icon" class="shop-street-return-icon" alt="" />
+          <span class="shop-street-return-label">返回</span>
+        </button>
+        <div class="shop-street-copy">
+          <div class="shop-street-kicker">深夜三店街</div>
+          <h3 id="shop-street-title" class="shop-street-title">沿着味道找店</h3>
+          <p id="shop-street-subtitle" class="shop-street-subtitle">猫大师把谜面递给你，街上的招牌亮了起来。</p>
+        </div>
+        <div id="shop-street-buildings" class="shop-street-buildings" aria-label="选择店铺">
+          <button class="shop-building-btn dessert-station" type="button" data-shop-id="dessert-station">
+            <span class="shop-building-image" aria-hidden="true"></span>
+            <span class="shop-building-label">甜品站</span>
+            <span class="shop-building-target-label">今晚的味道在这里</span>
+          </button>
+          <button class="shop-building-btn ice-room" type="button" data-shop-id="ice-room">
+            <span class="shop-building-image" aria-hidden="true"></span>
+            <span class="shop-building-label">冰室</span>
+            <span class="shop-building-target-label">今晚的味道在这里</span>
+          </button>
+          <button class="shop-building-btn street-stall" type="button" data-shop-id="street-stall">
+            <span class="shop-building-image" aria-hidden="true"></span>
+            <span class="shop-building-label">大排档</span>
+            <span class="shop-building-target-label">今晚的味道在这里</span>
+          </button>
+        </div>
+        <div id="shop-street-hint" class="shop-street-hint" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <div id="taste-transition-overlay" class="taste-transition-overlay" aria-hidden="true" hidden></div>
 
     <div id="shop-entry-overlay" class="shop-entry-overlay" role="status" aria-live="polite" hidden>
       <div class="shop-entry-card">
@@ -185,13 +235,21 @@
     </div>
 
     <div id="overlay" class="result-overlay" role="dialog" aria-modal="true" aria-labelledby="food-name">
-      <div id="result-card" class="result-card">
-        <div id="result-eyebrow" class="result-eyebrow">猫大师端上一道夜宵</div>
-        <div id="food-result" class="food-icon">🍜</div>
-        <h3 id="food-name">获得食物</h3>
-        <p id="wisdom-text" class="result-text">猫咪智慧加载中...</p>
-        <div id="collection-feedback" class="collection-feedback" aria-live="polite"></div>
-        <button class="issue-btn result-action-btn" id="result-action-btn" type="button">把智慧带走</button>
+      <div class="result-shell">
+        <div class="result-cat-stage" aria-hidden="true">
+          <img id="result-cat-image" class="result-cat-image" alt="" hidden />
+          <div id="result-cat-fallback" class="result-cat-fallback">🐱</div>
+        </div>
+        <div id="result-card" class="result-card">
+          <div id="result-eyebrow" class="result-eyebrow">猫大师端上一道夜宵</div>
+          <div id="food-result" class="food-icon">🍜</div>
+          <h3 id="food-name">获得食物</h3>
+          <p id="wisdom-text" class="result-text">猫咪智慧加载中...</p>
+          <div id="collection-feedback" class="collection-feedback" aria-live="polite"></div>
+          <div class="result-action-area">
+            <button class="issue-btn result-action-btn" id="result-action-btn" type="button">把智慧带走</button>
+          </div>
+        </div>
       </div>
     </div>
 
