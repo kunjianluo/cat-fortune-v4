@@ -1909,7 +1909,7 @@ body.is-initial-loading .game-stage {
 }
 
 .shop-street-subtitle {
-  max-width: 54ch;
+  max-width: 80ch;
   max-height: 4.8em;
   margin: 8px auto 0;
   overflow-y: auto;
