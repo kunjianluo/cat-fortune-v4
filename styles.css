@@ -89,6 +89,13 @@ body.is-initial-loading .game-stage {
   line-height: 1.45;
 }
 
+.loader-percent {
+  min-width: 4ch;
+  font-size: 12px;
+  line-height: 1;
+  color: rgba(255, 248, 216, 0.78);
+}
+
 .loader-progress {
   width: min(220px, 58vw);
   height: 7px;
@@ -149,6 +156,7 @@ body.is-initial-loading .game-stage {
 
 .stage-preload-overlay.is-visible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 @media (min-aspect-ratio: 4 / 3) {
@@ -1395,73 +1403,88 @@ body.is-initial-loading .game-stage {
   position: relative;
   min-width: 0;
   min-height: 0;
-  width: min(100%, 150px);
-  aspect-ratio: 3 / 4;
+  width: min(100%, 124px);
+  aspect-ratio: 1536 / 2752;
   justify-content: stretch;
   gap: 0;
   padding: 0;
-  border-color: rgba(255, 248, 216, 0.38);
-  background: #080812;
-  overflow: hidden;
+  border: 0;
+  background: transparent;
+  overflow: visible;
   transform-origin: center;
   z-index: 1;
 }
 
-.emotion-category-image-card::after {
-  content: "";
+.emotion-category-card-image-frame {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, transparent 58%, rgba(0, 0, 0, 0.58) 100%),
-    radial-gradient(circle at 50% 10%, rgba(255, 248, 216, 0.14), transparent 38%);
-  opacity: 0.62;
-  transition: opacity 0.18s ease;
+  border: 1px solid rgba(255, 248, 216, 0.38);
+  background: #080812;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 18px rgba(77, 231, 255, 0.12);
+  overflow: hidden;
+  transform: translateY(0) scale(1);
+  transform-origin: center;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .emotion-category-card-image {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   pointer-events: none;
   user-select: none;
 }
 
 .emotion-category-card-label {
   position: absolute;
-  z-index: 1;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  color: #fff8d8;
-  font-size: clamp(10px, 1.18vw, 13px);
-  font-weight: bold;
-  line-height: 1.25;
-  text-align: center;
-  text-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.95),
-    0 0 10px rgba(241, 196, 15, 0.42);
-  overflow-wrap: anywhere;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .emotion-category-image-card:hover,
 .emotion-category-image-card:focus-visible {
-  background: #080812;
+  background: transparent;
+  box-shadow: none;
+}
+
+.emotion-category-image-card:hover .emotion-category-card-image-frame,
+.emotion-category-image-card:focus-visible .emotion-category-card-image-frame {
+  border-color: rgba(255, 248, 216, 0.38);
   box-shadow:
-    0 0 0 1px rgba(255, 248, 216, 0.18),
-    0 0 26px rgba(241, 196, 15, 0.3),
-    0 12px 24px rgba(0, 0, 0, 0.34);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 18px rgba(77, 231, 255, 0.12);
+}
+
+.emotion-category-image-card:focus-visible {
+  outline: 2px solid rgba(241, 196, 15, 0.86);
+  outline-offset: 5px;
 }
 
 .card-flow-panel.is-level1-card-stage .emotion-category-image-card:hover,
 .card-flow-panel.is-level1-card-stage .emotion-category-image-card:focus-visible {
   z-index: 5;
-  transform: translateY(clamp(-34px, -4vw, -22px)) scale(1.17);
+  transform: none;
+}
+
+.card-flow-panel.is-level1-card-stage .emotion-category-image-card:hover .emotion-category-card-image-frame,
+.card-flow-panel.is-level1-card-stage .emotion-category-image-card:focus-visible .emotion-category-card-image-frame {
+  transform: translateY(clamp(-34px, -4vw, -22px)) scale(1.2);
 }
 
 .card-flow-panel.is-level1-card-stage .emotion-category-image-card:active {
   z-index: 6;
+  transform: none;
+}
+
+.card-flow-panel.is-level1-card-stage .emotion-category-image-card:active .emotion-category-card-image-frame {
   transform: translateY(clamp(-24px, -3vw, -14px)) scale(1.08);
   box-shadow:
     0 0 0 2px rgba(255, 248, 216, 0.38),
@@ -1469,20 +1492,13 @@ body.is-initial-loading .game-stage {
     0 10px 20px rgba(0, 0, 0, 0.36);
 }
 
-.card-flow-grid.is-level1-image-grid:has(.emotion-category-image-card:hover) .emotion-category-image-card:not(:hover),
-.card-flow-grid.is-level1-image-grid:has(.emotion-category-image-card:focus-visible) .emotion-category-image-card:not(:focus-visible) {
-  opacity: 0.78;
-  filter: saturate(0.82) brightness(0.84);
-}
-
-.emotion-category-image-card:hover::after,
-.emotion-category-image-card:focus-visible::after,
-.emotion-category-image-card.is-selected::after {
-  opacity: 0.32;
-}
-
 .emotion-category-image-card.is-selected {
   background: #080812;
+  box-shadow: none;
+}
+
+.emotion-category-image-card.is-selected .emotion-category-card-image-frame {
+  border-color: rgba(255, 248, 216, 0.7);
   box-shadow:
     0 0 0 2px rgba(255, 248, 216, 0.42),
     0 0 30px rgba(241, 196, 15, 0.42),
@@ -1628,6 +1644,55 @@ body.is-initial-loading .game-stage {
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+}
+
+.taste-return-btn {
+  position: absolute;
+  top: clamp(14px, 2.8vw, 28px);
+  left: clamp(14px, 2.8vw, 28px);
+  z-index: 3;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid rgba(255, 248, 216, 0.54);
+  background: rgba(4, 6, 14, 0.58);
+  color: #fff8d8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.32);
+}
+
+.taste-return-btn:hover,
+.taste-return-btn:focus-visible {
+  border-color: rgba(241, 196, 15, 0.86);
+  color: var(--shop-gold);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.taste-return-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.taste-return-label {
+  line-height: 1;
+}
+
+.taste-return-btn.has-return-icon .taste-return-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
 }
 
 .taste-dialog-box {
@@ -2786,9 +2851,34 @@ body.is-initial-loading .game-stage {
 }
 
 .game-stage.has-issue-shop-interior #shop-ui {
+  --rack-left: 47%;
+  --rack-top: 38%;
+  --rack-width: 43%;
+  --rack-height: 34%;
   width: min(100%, 980px);
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.game-stage.has-issue-shop-interior #shop-ui[data-shop-id="dessert-station"] {
+  --rack-left: 25%;
+  --rack-top: 33%;
+  --rack-width: 51%;
+  --rack-height: 55%;
+}
+
+.game-stage.has-issue-shop-interior #shop-ui[data-shop-id="ice-room"] {
+  --rack-left: 25%;
+  --rack-top: 33%;
+  --rack-width: 51%;
+  --rack-height: 55%;
+}
+
+.game-stage.has-issue-shop-interior #shop-ui[data-shop-id="street-stall"] {
+  --rack-left: 25%;
+  --rack-top: 33%;
+  --rack-width: 51%;
+  --rack-height: 55%;
 }
 
 .game-stage.has-issue-shop-interior .shop-interior-panel {
@@ -2810,6 +2900,15 @@ body.is-initial-loading .game-stage {
   opacity: 0.36;
 }
 
+.game-stage.has-issue-shop-interior .shop-tabs {
+  position: absolute;
+  left: 6.5%;
+  top: 28%;
+  z-index: 2;
+  width: 60%;
+  height: 56%;
+}
+
 .game-stage.has-issue-shop-interior .shop-card {
   grid-template-rows: minmax(0, 1fr);
   gap: 0;
@@ -2826,78 +2925,141 @@ body.is-initial-loading .game-stage {
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-placeholder {
+  position: relative;
   height: 100%;
   min-height: 0;
   max-height: none;
-  padding: 0 6px 4px;
+  padding: 0;
   border: 1px solid transparent;
   background: transparent;
   box-shadow: none;
   overflow: visible;
   backdrop-filter: none;
+  transform: none;
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-placeholder:hover,
 .game-stage.has-issue-shop-interior .shopkeeper-placeholder:focus-visible {
-  background: rgba(0, 0, 0, 0.08);
-  border-color: rgba(255, 248, 216, 0.24);
-  box-shadow: 0 0 18px rgba(241, 196, 15, 0.13);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-placeholder.is-speaking {
   border-color: rgba(241, 196, 15, 0.42);
+  animation: none;
+  transform: none;
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-image {
-  width: min(100%, 286px);
-  max-height: min(42svh, 330px);
-  margin: auto auto 4px;
-  flex: 1 1 auto;
+  position: absolute;
+  left: 0;
+  bottom: 4%;
+  width: min(64%, 236px);
+  max-height: min(48svh, 360px);
+  margin: 0;
+  flex: 0 0 auto;
   filter:
     drop-shadow(0 14px 15px rgba(0, 0, 0, 0.5))
     drop-shadow(0 0 10px rgba(255, 248, 216, 0.16));
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-cat {
-  margin: auto 0 6px;
+  position: absolute;
+  left: 7%;
+  bottom: 18%;
+  margin: 0;
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-note {
-  color: rgba(255, 248, 216, 0.82);
-  font-size: 10px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-line {
-  width: min(100%, 238px);
-  height: 48px;
-  max-height: 48px;
-  margin: 4px auto 0;
-  padding: 6px 9px;
-  border-color: rgba(73, 42, 24, 0.32);
-  background: rgba(255, 248, 225, 0.82);
-  color: #2a190f;
-  font-size: 10px;
-  line-height: 1.25;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+  /* 你只需要主要调这 4 个变量 */
+  --bubble-x: 20vw;
+  --bubble-y: 30vh;
+  --bubble-width: 340px;
+  --bubble-height: auto;
+
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: var(--bubble-x);
+  top: var(--bubble-y);
+  bottom: auto;
+
+  z-index: 999;
+  width: var(--bubble-width);
+  min-height: 76px;
+  height: var(--bubble-height);
+  max-height: 126px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
+
+  margin: 0;
+  padding: 15px 20px;
+  border: 1px solid rgba(255, 248, 216, 0.46);
+  border-radius: 18px 18px 18px 8px;
+  background: rgba(255, 248, 225, 0.76);
+  color: #24140c;
+  font-size: clamp(16px, 1.75vw, 21px);
+  font-weight: 700;
+  line-height: 1.45;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .game-stage.has-issue-shop-interior .shopkeeper-line::before {
-  border-color: rgba(73, 42, 24, 0.32);
-  background: rgba(255, 248, 225, 0.82);
+  content: "";
+  position: absolute;
+  left: 28px;
+  bottom: -20px;
+  width: 20px;
+  height: 0;
+  border: 0;
+  border-left: 1px solid rgba(255, 248, 216, 0.46);
+  border-bottom: 1px solid rgba(255, 248, 216, 0.46);
+  background: rgba(255, 248, 225, 0.76);
+  transform: rotate(-35deg) skew(12deg);
+  backdrop-filter: blur(4px);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
 }
 
 .game-stage.has-issue-shop-interior .ingredient-rack-shell {
-  padding: 8px;
-  border-color: rgba(255, 248, 216, 0.16);
-  background: rgba(0, 0, 0, 0.14);
+  position: absolute;
+  left: var(--rack-left);
+  top: var(--rack-top);
+  z-index: 2;
+  width: var(--rack-width);
+  height: var(--rack-height);
+  padding: 0;
+  border: 0;
+  background: transparent;
   box-shadow: none;
-  backdrop-filter: blur(1px);
+  backdrop-filter: none;
+  overflow: visible;
 }
 
-.game-stage.has-issue-shop-interior .rack-heading,
 .game-stage.has-issue-shop-interior .counter-heading {
   margin-bottom: 5px;
+}
+
+.game-stage.has-issue-shop-interior .rack-heading {
+  display: none;
 }
 
 .game-stage.has-issue-shop-interior .rack-title,
@@ -2912,87 +3074,152 @@ body.is-initial-loading .game-stage {
 }
 
 .game-stage.has-issue-shop-interior .ingredient-rack {
-  max-height: min(100%, 376px);
-  padding: 7px;
-  border: 1px solid rgba(255, 248, 216, 0.16);
-  background: rgba(20, 12, 8, 0.22);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: clamp(25px, 0.65vw, 7px);
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
   box-shadow:
-    inset 0 -8px 0 rgba(0, 0, 0, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.12);
+    0 8px 18px rgba(0, 0, 0, 0.08);
+  overflow: visible;
 }
 
 .game-stage.has-issue-shop-interior .ingredient {
-  min-height: 60px;
-  padding: 6px;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 6px 7px;
   border: 1px solid rgba(58, 38, 19, 0.7);
   background:
-    linear-gradient(180deg, rgba(255, 250, 229, 0.9), rgba(243, 223, 169, 0.84));
+    linear-gradient(180deg, rgba(255, 250, 229, 0.84), rgba(243, 223, 169, 0.76));
   box-shadow:
     0 2px 0 rgba(50, 25, 10, 0.5),
     inset 0 0 0 1px rgba(255, 255, 255, 0.35);
 }
 
 .game-stage.has-issue-shop-interior .ingredient-name {
+  flex: 0 0 auto;
   font-size: 13px;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .game-stage.has-issue-shop-interior .ingredient-desc {
+  flex: 0 1 auto;
+  max-height: 0;
+  margin-top: 0;
+  font-size: 8.5px;
+  line-height: 1.16;
+  opacity: 0;
+  -webkit-line-clamp: 4;
+  transition: max-height 0.14s ease, margin-top 0.14s ease, opacity 0.14s ease;
+}
+
+.game-stage.has-issue-shop-interior .ingredient:hover .ingredient-desc,
+.game-stage.has-issue-shop-interior .ingredient:focus-visible .ingredient-desc {
+  max-height: 4.8em;
   margin-top: 3px;
-  font-size: 9px;
-  -webkit-line-clamp: 1;
+  opacity: 1;
+}
+
+.game-stage.has-issue-shop-interior .ingredient-count {
+  display: none;
 }
 
 .game-stage.has-issue-shop-interior .sacrifice-counter {
-  min-height: 112px;
-  grid-template-columns: minmax(0, 1fr) 58px;
-  gap: 5px 8px;
-  padding: 12px 16px;
-  border-color: rgba(255, 248, 216, 0.22);
-  background: rgba(255, 248, 225, 0.82);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(1px);
+  position: absolute;
+  right: 59%;
+  bottom: 6%;
+  z-index: 3;
+  width: clamp(96px, 13vw, 148px);
+  min-height: 0;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .game-stage.has-issue-shop-interior .issue-play-screen.has-sacrifice-dialog-box .sacrifice-counter {
-  padding: 13px 19px;
+  padding: 0;
+  background-image: none;
 }
 
+.game-stage.has-issue-shop-interior .counter-heading,
 .game-stage.has-issue-shop-interior .counter-note {
   display: none;
 }
 
 .game-stage.has-issue-shop-interior .hint-text {
-  min-height: 14px;
+  order: 3;
+  display: none;
+  min-height: 15px;
   font-size: 10px;
   line-height: 1.25;
+  text-align: center;
+  color: #ffd772;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.78);
 }
 
 .game-stage.has-issue-shop-interior .sacrifice-area {
-  gap: 6px;
+  order: 2;
+  display: grid;
+  grid-template-columns: repeat(2, 24px);
+  justify-content: center;
+  gap: 5px;
 }
 
 .game-stage.has-issue-shop-interior .sacrifice-slot {
-  min-height: 42px;
-  gap: 3px;
-  padding: 5px 7px;
+  width: 24px;
+  min-height: 24px;
+  gap: 0;
+  padding: 0;
   border-width: 1px;
+  border-style: solid;
+  border-radius: 50%;
+  background: rgba(255, 248, 225, 0.42);
+  color: transparent;
+  opacity: 0.68;
+}
+
+.game-stage.has-issue-shop-interior .sacrifice-slot.filled {
+  background: rgba(241, 196, 15, 0.76);
+  opacity: 1;
+}
+
+.game-stage.has-issue-shop-interior .sacrifice-slot.filled::after {
+  content: "×";
+  color: #2a190f;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .game-stage.has-issue-shop-interior .slot-label {
-  font-size: 10px;
+  display: none;
 }
 
 .game-stage.has-issue-shop-interior .slot-value {
-  font-size: 12px;
+  display: none;
 }
 
 .game-stage.has-issue-shop-interior .submit-btn.has-ring-icon {
+  order: 1;
+  justify-self: center;
   width: 58px;
   height: 58px;
   min-width: 58px;
 }
 
 .game-stage.has-issue-shop-interior .feedback {
+  order: 4;
   min-height: 15px;
   font-size: 11px;
   line-height: 1.25;
@@ -3042,6 +3269,13 @@ body.is-initial-loading .game-stage {
   .game-stage.has-issue-shop-interior .shop-tabs,
   .game-stage.has-issue-shop-interior .sacrifice-counter,
   .game-stage.has-issue-shop-interior .ingredient-rack-shell {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: auto;
+    height: auto;
     grid-column: auto;
     grid-row: auto;
   }
@@ -3053,12 +3287,53 @@ body.is-initial-loading .game-stage {
   }
 
   .game-stage.has-issue-shop-interior .shopkeeper-image {
+    position: static;
+    width: 100%;
     max-height: 132px;
+    margin: auto auto 4px;
+  }
+
+  .game-stage.has-issue-shop-interior .shopkeeper-cat {
+    position: static;
+    margin: auto 0 6px;
   }
 
   .game-stage.has-issue-shop-interior .shopkeeper-line {
-    height: 40px;
-    max-height: 40px;
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: min(100%, 238px);
+    min-height: 52px;
+    height: auto;
+    max-height: 96px;
+    margin: 4px auto 0;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .game-stage.has-issue-shop-interior .shopkeeper-line::before {
+    top: -7px;
+    left: 50%;
+    bottom: auto;
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-left: 1px solid rgba(255, 248, 216, 0.46);
+    border-top: 1px solid rgba(255, 248, 216, 0.46);
+    border-bottom: 0;
+    transform: translateX(-50%) rotate(45deg);
+  }
+
+  .game-stage.has-issue-shop-interior .rack-heading {
+    display: flex;
+  }
+
+  .game-stage.has-issue-shop-interior .ingredient-rack {
+    height: auto;
+    padding: 7px;
+    border: 1px solid rgba(255, 248, 216, 0.16);
+    background: rgba(20, 12, 8, 0.22);
+    overflow-y: auto;
   }
 
   .game-stage.has-issue-shop-interior .ingredient-rack {
@@ -3070,12 +3345,50 @@ body.is-initial-loading .game-stage {
     grid-template-columns: 1fr 54px;
     min-height: 100px;
     padding: 11px 15px;
+    width: auto;
+    background: rgba(255, 248, 225, 0.82);
+  }
+
+  .game-stage.has-issue-shop-interior .counter-heading {
+    display: flex;
+  }
+
+  .game-stage.has-issue-shop-interior .hint-text {
+    order: 0;
+    display: block;
+  }
+
+  .game-stage.has-issue-shop-interior .sacrifice-area {
+    order: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+
+  .game-stage.has-issue-shop-interior .sacrifice-slot {
+    width: auto;
+    min-height: 42px;
+    border-radius: 0;
+    color: #25170f;
+  }
+
+  .game-stage.has-issue-shop-interior .sacrifice-slot.filled::after {
+    content: none;
+  }
+
+  .game-stage.has-issue-shop-interior .slot-label,
+  .game-stage.has-issue-shop-interior .slot-value {
+    display: block;
   }
 
   .game-stage.has-issue-shop-interior .submit-btn.has-ring-icon {
+    order: 0;
     width: 54px;
     height: 54px;
     min-width: 54px;
+  }
+
+  .game-stage.has-issue-shop-interior .feedback {
+    order: 0;
   }
 }
 
@@ -4786,13 +5099,19 @@ body.is-initial-loading .game-stage {
   }
 
   .emotion-category-image-card,
-  .emotion-category-image-card::after {
+  .emotion-category-card-image-frame {
     transition: none;
   }
 
   .emotion-category-image-card:hover,
   .emotion-category-image-card:focus-visible,
   .emotion-category-image-card.is-selected {
+    transform: none;
+  }
+
+  .emotion-category-image-card:hover .emotion-category-card-image-frame,
+  .emotion-category-image-card:focus-visible .emotion-category-card-image-frame,
+  .emotion-category-image-card.is-selected .emotion-category-card-image-frame {
     transform: none;
   }
 
@@ -4971,7 +5290,7 @@ body.is-initial-loading .game-stage {
   }
 
   .emotion-category-image-card {
-    width: min(100%, 130px);
+    width: min(100%, 108px);
   }
 
   .penalty-card {
@@ -5327,13 +5646,18 @@ body.is-initial-loading .game-stage {
   }
 
   .emotion-category-image-card {
-    width: min(100%, 112px);
+    width: min(100%, 92px);
     min-height: 0;
   }
 
   .card-flow-panel.is-level1-card-stage .emotion-category-image-card:hover,
   .card-flow-panel.is-level1-card-stage .emotion-category-image-card:focus-visible {
-    transform: translateY(-12px) scale(1.08);
+    transform: none;
+  }
+
+  .card-flow-panel.is-level1-card-stage .emotion-category-image-card:hover .emotion-category-card-image-frame,
+  .card-flow-panel.is-level1-card-stage .emotion-category-image-card:focus-visible .emotion-category-card-image-frame {
+    transform: translateY(-12px) scale(1.12);
   }
 
   .mood-card {
@@ -5351,6 +5675,12 @@ body.is-initial-loading .game-stage {
   .card-flow-panel.is-level1-card-stage .emotion-category-image-card:hover,
   .card-flow-panel.is-level1-card-stage .emotion-category-image-card:focus-visible,
   .card-flow-panel.is-level1-card-stage .emotion-category-image-card:active {
+    transform: none;
+  }
+
+  .card-flow-panel.is-level1-card-stage .emotion-category-image-card:hover .emotion-category-card-image-frame,
+  .card-flow-panel.is-level1-card-stage .emotion-category-image-card:focus-visible .emotion-category-card-image-frame,
+  .card-flow-panel.is-level1-card-stage .emotion-category-image-card:active .emotion-category-card-image-frame {
     transform: none;
   }
 }

@@ -9,10 +9,11 @@
 <body class="is-initial-loading">
   <div id="initial-loader" class="initial-loader" role="status" aria-live="polite" aria-busy="true">
     <div class="loader-cat" aria-hidden="true">🐱</div>
-    <div class="loader-text">猫猫加载中……</div>
+    <div id="initial-loader-text" class="loader-text">猫猫加载中……</div>
     <div class="loader-progress" aria-hidden="true">
       <div id="initial-loader-bar" class="loader-progress-bar"></div>
     </div>
+    <div id="initial-loader-percent" class="loader-percent">0%</div>
   </div>
 
   <main id="game-stage" class="game-stage">
@@ -157,6 +158,10 @@
 
     <section id="taste-description-screen" class="taste-description-screen" aria-labelledby="taste-description-title" hidden>
       <div class="taste-scene">
+        <button id="taste-return-btn" class="taste-return-btn" type="button" aria-label="返回上一页">
+          <img id="taste-return-icon" class="taste-return-icon" alt="" />
+          <span class="taste-return-label">返回</span>
+        </button>
         <div class="taste-dialog-box">
           <p id="taste-cat-line" class="taste-cat-line">Meow...this is a ‘味道题面’</p>
           <h3 id="taste-description-title" class="taste-description-title">今晚的味道</h3>
@@ -280,6 +285,7 @@
       <div class="loader-progress" aria-hidden="true">
         <div id="stage-preload-bar" class="loader-progress-bar"></div>
       </div>
+      <div id="stage-preload-percent" class="loader-percent">0%</div>
     </div>
   </main>
 
